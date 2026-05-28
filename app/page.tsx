@@ -198,7 +198,7 @@ export default function Home() {
             transition={{ delay: 0.2, duration: 1 }}
             className="absolute right-0 top-0 h-full w-1/2 lg:w-[55%] z-5 overflow-visible will-change-transform pointer-events-none"
           >
-            <div id="cyber-core-zoom" className="w-full h-full relative overflow-visible">
+            <div id="cyber-core-zoom" className="w-full h-full relative overflow-visible pointer-events-auto">
               <Scene />
             </div>
           </motion.div>

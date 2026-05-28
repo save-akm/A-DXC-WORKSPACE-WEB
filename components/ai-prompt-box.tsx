@@ -151,7 +151,7 @@ export function AiPromptBox() {
             transition={{ delay: 0.65, duration: 0.6, ease: 'easeOut' }}
             className={`
               w-full h-full flex flex-col rounded-2xl overflow-hidden transition-all duration-300
-              bg-white/50 dark:bg-white/5 backdrop-blur-xl
+              bg-white/95 dark:bg-white/5 backdrop-blur-sm dark:backdrop-blur-xl
               border
               ${isFocused
                 ? 'border-indigo-400/50 dark:border-indigo-500/30 shadow-[0_0_30px_-5px_rgba(99,102,241,0.15)] dark:shadow-[0_0_40px_-5px_rgba(99,102,241,0.12)]'
