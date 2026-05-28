@@ -21,9 +21,13 @@ import { ChatInterface } from '@/components/chat-interface';
 import { VisualDataFlow } from '@/components/visual-data-flow';
 
 
-const Scene = dynamic(() => import('@/components/it-nextgen-scene'), { 
+const Scene = dynamic(() => import('@/components/it-robot-scene'), {
   ssr: false,
-  loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-zinc-900/5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">Initiating Core...</div>
+  loading: () => (
+    <div className="h-[330px] 2xl:h-[500px] w-full flex items-center justify-center bg-zinc-900/5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 text-sm text-muted-foreground">
+      Initializing AI...
+    </div>
+  ),
 });
 
 const BackgroundScene = dynamic(() => import('@/components/hero-background-scene'), { ssr: false });
@@ -213,23 +217,23 @@ export default function Home() {
             </div>
 
             {/* Hero Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-3 items-center flex-grow relative">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-3 items-center grow relative">
 
               {/* LEFT CONTENT */}
               <div id="hero-content-left" className="space-y-6 md:space-y-8 2xl:space-y-10">
                 <h1 
                   ref={headingRef}
-                  className="text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-[800px]"
+                  className="text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-200"
                 >
 
-                  The Modern <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent italic pr-4">Workspace</span>
+                  The Modern <span className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent italic pr-4">Workspace</span>
                 </h1>
                 
                 <motion.p 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
-                  className="text-base md:text-lg 2xl:text-xl text-muted-foreground max-w-[600px] leading-relaxed"
+                  className="text-base md:text-lg 2xl:text-xl text-muted-foreground max-w-150 leading-relaxed"
                 >
                   ศูนย์กลางการทำงานของ A-DXC ที่เชื่อมโยงทั้งข้อมูล เครื่องมือ และ AI Support ไว้ในที่เดียว
                 </motion.p>
@@ -295,7 +299,7 @@ export default function Home() {
               z-[5] keeps Landing behind the fixed hero so it stays hidden
               while the warp is active; once hero fades to autoAlpha:0,
               Landing shows through. ─── */}
-      <div className="relative z-[5]">
+      <div className="relative z-5">
         <Landing />
       </div>
 
