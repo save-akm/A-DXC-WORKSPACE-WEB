@@ -8,7 +8,7 @@ const SCENE_URL = '/3d/robot.splinecode'
 
 export default function ITRobotScene() {
   return (
-    <div className="w-full h-80 sm:h-96 lg:h-[min(520px,65vh)] xl:h-[min(600px,70vh)] 2xl:h-175 relative overflow-visible">
+    <div className="w-full h-full relative overflow-visible">
       <Spline
         scene={SCENE_URL}
         className="w-full h-full"

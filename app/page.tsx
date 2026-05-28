@@ -24,7 +24,7 @@ import { VisualDataFlow } from '@/components/visual-data-flow';
 const Scene = dynamic(() => import('@/components/it-robot-scene'), {
   ssr: false,
   loading: () => (
-    <div className="h-80 sm:h-96 lg:h-[min(520px,65vh)] xl:h-[min(600px,70vh)] 2xl:h-175 w-full flex items-center justify-center text-sm text-muted-foreground">
+    <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
       Initializing AI...
     </div>
   ),
@@ -186,9 +186,22 @@ export default function Home() {
               range; the warp timeline fades it out (autoAlpha) when warp
               completes so Landing (at z-[5] below hero) shows through. ═══ */}
       <section id="hero-section" className="fixed inset-0 w-full h-full flex flex-col justify-between py-4 md:py-4 2xl:py-8 overflow-hidden z-10">
-          
+
           {/* Visual Data Flow (Background of Hero) */}
           <VisualDataFlow />
+
+          {/* Robot — absolute right side, outside grid, full hero height */}
+          <motion.div
+            id="hero-content-right"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 1 }}
+            className="absolute right-0 top-0 h-full w-1/2 lg:w-[55%] z-20 overflow-visible will-change-transform pointer-events-none"
+          >
+            <div id="cyber-core-zoom" className="w-full h-full relative overflow-visible">
+              <Scene />
+            </div>
+          </motion.div>
 
           <div className="container mx-auto px-6 md:px-12 lg:px-14 2xl:px-4 relative z-10 flex flex-col h-full">
             {/* Top Bar */}
@@ -212,33 +225,30 @@ export default function Home() {
                   <ThemeToggle />
                 </motion.div>
               </div>
-              
+
               <HeroTelemetry />
             </div>
 
-            {/* Hero Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-3 items-center grow relative">
-
-              {/* LEFT CONTENT */}
-              <div id="hero-content-left" className="space-y-6 md:space-y-8 2xl:space-y-10">
-                <h1 
+            {/* Left content — no grid, grows to fill remaining space */}
+            <div className="grow flex flex-col justify-center relative">
+              <div id="hero-content-left" className="space-y-6 md:space-y-8 2xl:space-y-10 max-w-xl">
+                <h1
                   ref={headingRef}
-                  className="text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-200"
+                  className="text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1]"
                 >
-
                   The Modern <span className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent italic pr-4">Workspace</span>
                 </h1>
-                
-                <motion.p 
+
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
-                  className="text-base md:text-lg 2xl:text-xl text-muted-foreground max-w-150 leading-relaxed"
+                  className="text-base md:text-lg 2xl:text-xl text-muted-foreground max-w-md leading-relaxed"
                 >
                   ศูนย์กลางการทำงานของ A-DXC ที่เชื่อมโยงทั้งข้อมูล เครื่องมือ และ AI Support ไว้ในที่เดียว
                 </motion.p>
 
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
@@ -251,8 +261,8 @@ export default function Home() {
                   >
                     เข้าสู่ระบบ <Rocket size={18} />
                   </Button>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     variant="outline"
                     className="rounded-full gap-2 px-8 border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm hover:bg-zinc-100 dark:hover:bg-white/10 transition-all cursor-pointer"
                     onClick={handleAppHubClick}
@@ -262,20 +272,7 @@ export default function Home() {
                 </motion.div>
               </div>
 
-              {/* RIGHT CONTENT (CyberCore Wrapper) */}
-              <motion.div
-                id="hero-content-right"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 1 }}
-                className="relative will-change-transform z-20 overflow-visible"
-              >
-                <div id="cyber-core-zoom" className="w-full relative overflow-visible">
-                  <Scene />
-                </div>
-              </motion.div>
-
-              {/* Chat overlay — replaces hero left/right while prompt is active */}
+              {/* Chat overlay */}
               <AnimatePresence>
                 {isPromptActive && <ChatInterface key="chat-interface" />}
               </AnimatePresence>
