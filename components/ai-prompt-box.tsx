@@ -24,7 +24,7 @@ function SideWidget({ title, icon: Icon, children, delay = 0, id }: { title: str
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: delay, duration: 0.5 }}
-      className="hidden xl:flex flex-col gap-2 w-64 h-full p-4 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10"
+      className="hidden xl:flex flex-col gap-2 w-64 h-full p-4 rounded-2xl bg-white/95 dark:bg-white/5 backdrop-blur-sm dark:backdrop-blur-md border border-zinc-200 dark:border-white/10"
     >
       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
         <Icon size={14} className="text-indigo-500" />
