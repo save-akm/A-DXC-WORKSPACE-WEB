@@ -24,7 +24,7 @@ import { VisualDataFlow } from '@/components/visual-data-flow';
 const Scene = dynamic(() => import('@/components/it-robot-scene'), {
   ssr: false,
   loading: () => (
-    <div className="h-115 lg:h-140 2xl:h-175 w-full flex items-center justify-center text-sm text-muted-foreground">
+    <div className="h-80 sm:h-96 lg:h-[min(520px,65vh)] xl:h-[min(600px,70vh)] 2xl:h-175 w-full flex items-center justify-center text-sm text-muted-foreground">
       Initializing AI...
     </div>
   ),
