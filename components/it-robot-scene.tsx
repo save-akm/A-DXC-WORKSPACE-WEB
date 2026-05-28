@@ -271,7 +271,7 @@ export default function ITRobotScene() {
   const isDark = resolvedTheme === 'dark'
 
   return (
-    <div className="h-82.5 2xl:h-125 w-full cursor-grab active:cursor-grabbing relative overflow-visible">
+    <div className="h-65 sm:h-75 lg:h-82.5 2xl:h-125 w-full cursor-grab active:cursor-grabbing relative overflow-visible">
       {/* Ambient glow — dark mode only */}
       <div className="absolute inset-0 rounded-2xl bg-sky-500/5 dark:bg-sky-400/10 blur-2xl opacity-0 dark:opacity-100 pointer-events-none" />
       {/* Border ring */}
