@@ -196,7 +196,7 @@ export default function Home() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 1 }}
-            className="absolute right-0 top-0 h-full w-1/2 lg:w-[55%] z-20 overflow-visible will-change-transform pointer-events-none"
+            className="absolute right-0 top-0 h-full w-1/2 lg:w-[55%] z-5 overflow-visible will-change-transform pointer-events-none"
           >
             <div id="cyber-core-zoom" className="w-full h-full relative overflow-visible">
               <Scene />
