@@ -69,12 +69,12 @@ function Robot({ isDark }: { isDark: boolean }) {
     if (eyeGroupRef.current) {
       eyeGroupRef.current.rotation.y = THREE.MathUtils.lerp(
         eyeGroupRef.current.rotation.y,
-        pointer.x * (Math.PI / 6),
+        THREE.MathUtils.clamp(pointer.x * (Math.PI / 6), -Math.PI / 6, Math.PI / 6),
         0.05,
       )
       eyeGroupRef.current.rotation.x = THREE.MathUtils.lerp(
         eyeGroupRef.current.rotation.x,
-        -pointer.y * (Math.PI / 6),
+        THREE.MathUtils.clamp(-pointer.y * (Math.PI / 6), -Math.PI / 6, Math.PI / 6),
         0.05,
       )
     }
