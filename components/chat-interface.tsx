@@ -22,7 +22,7 @@ export function ChatInterface() {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="absolute inset-x-0 top-3 bottom-0 z-30 col-span-full pointer-events-none"
     >
-      <div className="w-full h-full rounded-3xl bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-indigo-500/10 overflow-hidden flex flex-col pointer-events-auto">
+      <div className="w-full h-full rounded-3xl bg-white/95 dark:bg-white/5 backdrop-blur-sm dark:backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-indigo-500/10 overflow-hidden flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-zinc-200/80 dark:border-white/10 shrink-0">
           <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
