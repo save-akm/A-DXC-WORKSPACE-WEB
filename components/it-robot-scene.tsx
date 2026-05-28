@@ -277,7 +277,20 @@ export default function ITRobotScene() {
         <ambientLight intensity={isDark ? 0.5 : 1.2} />
         <pointLight position={[10, 10, 10]} intensity={1.5} color={isDark ? '#0ea5e9' : '#0284c7'} />
         <pointLight position={[-10, -10, -10]} intensity={1.0} color="#22d3ee" />
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <group>
+              <mesh position={[0, 1.6, 0]}>
+                <boxGeometry args={[0.8, 0.85, 0.7]} />
+                <meshBasicMaterial color="#0ea5e9" wireframe transparent opacity={0.3} />
+              </mesh>
+              <mesh position={[0, 0.5, 0]}>
+                <boxGeometry args={[1.1, 1.1, 0.65]} />
+                <meshBasicMaterial color="#0ea5e9" wireframe transparent opacity={0.2} />
+              </mesh>
+            </group>
+          }
+        >
           <Robot isDark={isDark} />
           <Environment preset="city" />
         </Suspense>
