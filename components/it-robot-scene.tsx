@@ -271,7 +271,11 @@ export default function ITRobotScene() {
   const isDark = resolvedTheme === 'dark'
 
   return (
-    <div className="h-[330px] 2xl:h-[500px] w-full cursor-grab active:cursor-grabbing relative overflow-visible">
+    <div className="h-82.5 2xl:h-125 w-full cursor-grab active:cursor-grabbing relative overflow-visible">
+      {/* Ambient glow — dark mode only */}
+      <div className="absolute inset-0 rounded-2xl bg-sky-500/5 dark:bg-sky-400/10 blur-2xl opacity-0 dark:opacity-100 pointer-events-none" />
+      {/* Border ring */}
+      <div className="absolute inset-0 rounded-2xl border border-sky-500/10 dark:border-cyan-400/15 pointer-events-none" />
       <Canvas key={resolvedTheme} gl={{ powerPreference: 'high-performance', antialias: true }}>
         <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
         <ambientLight intensity={isDark ? 0.5 : 1.2} />
