@@ -37,7 +37,6 @@ function Robot({ isDark }: { isDark: boolean }) {
   const eyeGroupRef     = useRef<THREE.Group>(null!)
   const rightShoulderRef = useRef<THREE.Group>(null!)
   const rightElbowRef   = useRef<THREE.Group>(null!)
-  const leftShoulderRef  = useRef<THREE.Group>(null!)
   const robotRootRef    = useRef<THREE.Group>(null!)
   const ring1Ref        = useRef<THREE.Mesh>(null!)
   const ring2Ref        = useRef<THREE.Mesh>(null!)
@@ -127,7 +126,7 @@ function Robot({ isDark }: { isDark: boolean }) {
         break
       }
       case 'POWER_UP': {
-        const pulse = baseEI + Math.sin(t * Math.PI * 4) * 3
+        const pulse = Math.max(0, baseEI + Math.sin(t * Math.PI * 4) * 3)
         matRefs.current.forEach((m) => { m.emissiveIntensity = pulse })
         if (robotRootRef.current) {
           const s = 1 + Math.sin(t * Math.PI * 2) * 0.05
@@ -235,7 +234,7 @@ function Robot({ isDark }: { isDark: boolean }) {
         </group>
 
         {/* ── Left Arm (mirror) ── */}
-        <group ref={leftShoulderRef} position={[-0.72, 0.95, 0]}>
+        <group position={[-0.72, 0.95, 0]}>
           <mesh position={[0, -0.28, 0]}>
             <cylinderGeometry args={[0.12, 0.12, 0.55, 8]} />
             <meshStandardMaterial ref={addMat} {...matProps} />
