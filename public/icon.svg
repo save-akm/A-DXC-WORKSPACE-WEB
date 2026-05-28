@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="cyber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" /> <!-- indigo-600 -->
+      <stop offset="50%" stop-color="#a855f7" /> <!-- purple-500 -->
+      <stop offset="100%" stop-color="#db2777" /> <!-- pink-600 -->
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background is transparent -->
+  <rect width="256" height="256" fill="transparent" />
+  
+  <!-- Outer Hexagon -->
+  <path d="M128 20L232 80V176L128 236L24 176V80L128 20Z" fill="url(#cyber)" />
+  
+  <!-- Inner Detail Structure -->
+  <path d="M128 48L192 84V164L128 200L64 164V84L128 48Z" fill="#ffffff" opacity="0.15" />
+  
+  <!-- Glowing Center Core -->
+  <circle cx="128" cy="128" r="48" fill="#ffffff" filter="url(#glow)" />
+  <circle cx="128" cy="128" r="20" fill="url(#cyber)" />
+  
+  <!-- Core Ring -->
+  <circle cx="128" cy="128" r="64" stroke="#ffffff" stroke-width="4" stroke-opacity="0.5" fill="none" />
+</svg>

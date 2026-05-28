@@ -1,0 +1,102 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { createSocketClient, disconnectSocket, emitOnline } from '@/lib/socket/socket-client';
+import type { Socket } from 'socket.io-client';
+
+const SocketContext = createContext<Socket | null>(null);
+
+export function useSocket() {
+  return useContext(SocketContext);
+}
+
+export function useSocketEvent(
+  event: string,
+  listener: (...args: unknown[]) => void,
+  deps: unknown[] = [],
+) {
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handler = (...args: unknown[]) => listener(...args);
+    socket.on(event, handler as (...args: unknown[]) => void);
+
+    return () => {
+      socket.off(event, handler as (...args: unknown[]) => void);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, event, listener, ...deps]);
+}
+
+export function useSocketEmit() {
+  const socket = useSocket();
+
+  return useCallback(
+    (event: string, payload?: unknown) => {
+      if (!socket || !socket.connected) return;
+      socket.emit(event, payload);
+    },
+    [socket],
+  );
+}
+
+export function SocketProvider({ children }: { children: ReactNode }) {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
+  const status = useAuthStore((s) => s.status);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !accessToken || !user) return undefined;
+
+    const client = createSocketClient(accessToken);
+
+    const profilePayload = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      nickname: user.nickname,
+      avatarUrl: user.avatarUrl,
+    };
+
+    const handleConnect = () => {
+      emitOnline(profilePayload);
+    };
+
+    const handleConnectError = (error: unknown) => {
+      console.error('[SocketProvider] connect_error', error);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.info('[SocketProvider] disconnected', reason);
+    };
+
+    const handleAny = (event: string, ...args: unknown[]) => {
+      console.info('[SocketProvider] onAny', event, args);
+    };
+
+    client.on('connect', handleConnect);
+    client.on('connect_error', handleConnectError);
+    client.on('disconnect', handleDisconnect);
+    client.onAny(handleAny);
+
+    client.connect();
+    setSocket(client);
+
+    return () => {
+      client.off('connect', handleConnect);
+      client.off('connect_error', handleConnectError);
+      client.off('disconnect', handleDisconnect);
+      client.offAny(handleAny);
+      disconnectSocket();
+      setSocket(null);
+    };
+  }, [accessToken, status, user]);
+
+  return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
+}

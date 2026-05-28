@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies.next\\)\")",
+      "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/list\")",
+      "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/timeline\")",
+      "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/calendar\")"
+    ]
+  }
+}
