@@ -1,10 +1,10 @@
 'use client'
 
-import { Suspense, lazy } from 'react'
+import dynamic from 'next/dynamic'
 
-const Spline = lazy(() => import('@splinetool/react-spline'))
+const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false })
 
-const SCENE_URL = 'https://prod.spline.design/C5kofxMJPqbr9xgFSK2Z2yct/scene.splinecode'
+const SCENE_URL = '/3d/robot.splinecode'
 
 function RobotSkeleton() {
   return (
@@ -21,12 +21,11 @@ export default function ITRobotScene() {
       <div className="absolute inset-0 rounded-2xl bg-sky-500/5 dark:bg-sky-400/10 blur-2xl opacity-0 dark:opacity-100 pointer-events-none z-10" />
       {/* Border ring */}
       <div className="absolute inset-0 rounded-2xl border border-sky-500/10 dark:border-cyan-400/15 pointer-events-none z-10" />
-      <Suspense fallback={<RobotSkeleton />}>
-        <Spline
-          scene={SCENE_URL}
-          className="w-full h-full"
-        />
-      </Suspense>
+      <Spline
+        scene={SCENE_URL}
+        className="w-full h-full"
+        style={{ width: '100%', height: '100%' }}
+      />
     </div>
   )
 }
