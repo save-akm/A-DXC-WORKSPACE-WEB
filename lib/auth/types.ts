@@ -43,6 +43,7 @@ export interface SessionData {
   user: AuthUser;
   menus: MenuNode[];
   accessToken: string;
+  refreshToken: string;
   expiresAt: number;
   mustChangePassword: boolean;
   /** Present only when mustChangePassword = true — used to activate the cookie after password update */
@@ -60,5 +61,15 @@ export type UpdatePasswordActionState =
   | { status: 'error'; error: string };
 
 export type RefreshActionState =
-  | { status: 'success'; accessToken: string; expiresAt: number }
+  | { status: 'success'; accessToken: string; expiresAt: number; refreshToken: string }
+  | { status: 'error'; error: string };
+
+export type ForgotPasswordActionState =
+  | { status: 'idle' }
+  | { status: 'success' }
+  | { status: 'error'; error: string };
+
+export type ResetPasswordActionState =
+  | { status: 'idle' }
+  | { status: 'success' }
   | { status: 'error'; error: string };
