@@ -2,15 +2,17 @@
 
 import {
   AuthApiError,
+  forgotPasswordRequest,
   loginRequest,
   logoutRequest,
   meRequest,
   menuRequest,
   refreshRequest,
+  resetPasswordRequest,
   updatePasswordRequest,
 } from './api';
-import { clearRefreshCookie, getRefreshCookie, setRefreshCookie } from './cookies';
-import type { AuthUser, LoginActionState, MenuNode, RefreshActionState, UpdatePasswordActionState } from './types';
+import { clearRefreshCookie, setRefreshCookie } from './cookies';
+import type { AuthUser, ForgotPasswordActionState, LoginActionState, MenuNode, RefreshActionState, ResetPasswordActionState, UpdatePasswordActionState } from './types';
 
 function mapError(e: unknown, fallback: string): { message: string; code?: string } {
   if (e instanceof AuthApiError) {
@@ -27,6 +29,7 @@ export async function loginAction(
 ): Promise<LoginActionState> {
   const identifier = (formData.get('identifier') ?? '').toString().trim();
   const password = (formData.get('password') ?? '').toString();
+  const rememberMe = formData.get('remember') === 'on';
 
   if (!identifier || !password) {
     return { status: 'error', error: 'กรุณากรอกอีเมลและรหัสผ่าน' };
@@ -52,19 +55,21 @@ export async function loginAction(
           user,
           menus,
           accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
           expiresAt: Date.now() + res.expiresIn * 1000,
           mustChangePassword: true,
           pendingRefreshToken: res.refreshToken,
         },
       };
     }
-    await setRefreshCookie(res.refreshToken);
+    await setRefreshCookie(res.refreshToken, rememberMe);
     return {
       status: 'success',
       data: {
         user,
         menus,
         accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
         expiresAt: Date.now() + res.expiresIn * 1000,
         mustChangePassword: false,
       },
@@ -75,16 +80,15 @@ export async function loginAction(
   }
 }
 
-export async function refreshAction(): Promise<RefreshActionState> {
-  const token = await getRefreshCookie();
-  if (!token) return { status: 'error', error: 'NO_REFRESH_TOKEN' };
+export async function refreshAction(refreshToken: string, rememberMe = true): Promise<RefreshActionState> {
   try {
-    const res = await refreshRequest(token);
-    await setRefreshCookie(res.refreshToken);
+    const res = await refreshRequest(refreshToken);
+    await setRefreshCookie(res.refreshToken, rememberMe);
     return {
       status: 'success',
       accessToken: res.accessToken,
       expiresAt: Date.now() + res.expiresIn * 1000,
+      refreshToken: res.refreshToken,
     };
   } catch {
     await clearRefreshCookie();
@@ -122,6 +126,7 @@ export async function logoutAction(accessToken: string | null): Promise<{ ok: bo
 export async function updatePasswordAction(
   accessToken: string,
   refreshToken: string,
+  rememberMe: boolean,
   _prev: UpdatePasswordActionState,
   formData: FormData,
 ): Promise<UpdatePasswordActionState> {
@@ -136,7 +141,46 @@ export async function updatePasswordAction(
     await updatePasswordRequest(accessToken, newPassword);
     // Only activate the session cookie after the password change succeeds,
     // so a page refresh before this point keeps the user on /login.
-    await setRefreshCookie(refreshToken);
+    await setRefreshCookie(refreshToken, rememberMe);
+    return { status: 'success' };
+  } catch (e) {
+    const { message } = mapError(e, 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+    return { status: 'error', error: message };
+  }
+}
+
+export async function forgotPasswordAction(
+  _prev: ForgotPasswordActionState,
+  formData: FormData,
+): Promise<ForgotPasswordActionState> {
+  const identifier = (formData.get('identifier') ?? '').toString().trim();
+  if (!identifier) return { status: 'error', error: 'กรุณากรอกอีเมลหรือรหัสพนักงาน' };
+
+  try {
+    await forgotPasswordRequest(identifier);
+    return { status: 'success' };
+  } catch (e) {
+    const { message } = mapError(e, 'ไม่สามารถส่ง OTP ได้ กรุณาลองใหม่');
+    return { status: 'error', error: message };
+  }
+}
+
+export async function resetPasswordAction(
+  identifier: string,
+  _prev: ResetPasswordActionState,
+  formData: FormData,
+): Promise<ResetPasswordActionState> {
+  const otp = (formData.get('otp') ?? '').toString().trim();
+  const newPassword = (formData.get('newPassword') ?? '').toString();
+  const confirmPassword = (formData.get('confirmPassword') ?? '').toString();
+
+  if (!otp || otp.length !== 4) return { status: 'error', error: 'กรุณากรอก OTP 4 หลัก' };
+  if (!newPassword) return { status: 'error', error: 'กรุณากรอกรหัสผ่านใหม่' };
+  if (newPassword.length < 8) return { status: 'error', error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
+  if (newPassword !== confirmPassword) return { status: 'error', error: 'รหัสผ่านไม่ตรงกัน' };
+
+  try {
+    await resetPasswordRequest(identifier, otp, newPassword);
     return { status: 'success' };
   } catch (e) {
     const { message } = mapError(e, 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
