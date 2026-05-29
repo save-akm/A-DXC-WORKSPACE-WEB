@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { authConfig } from './config';
 
-export async function setRefreshCookie(token: string) {
+export async function setRefreshCookie(token: string, rememberMe = true) {
   const store = await cookies();
   store.set(authConfig.cookies.refresh, token, {
     httpOnly: true,

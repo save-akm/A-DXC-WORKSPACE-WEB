@@ -14,8 +14,5 @@ export const authConfig = {
     refresh: 'a_dxc_rt',
   },
   refreshLeadMs: 60_000,
-  refreshCookieMaxAge: {
-    remember: 60 * 60 * 24 * 30, // 30 days
-    session: 60 * 60 * 24,       // 1 day
-  },
+  refreshCookieMaxAgeSeconds: 60 * 60 * 24 * 30,
 } as const;
