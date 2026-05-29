@@ -124,3 +124,21 @@ export function updatePasswordRequest(accessToken: string, newPassword: string):
     body: { newPassword },
   });
 }
+
+export function forgotPasswordRequest(identifier: string): Promise<void> {
+  return request<void>(authConfig.endpoints.forgotPassword, {
+    method: 'POST',
+    body: { identifier },
+  });
+}
+
+export function resetPasswordRequest(
+  identifier: string,
+  otp: string,
+  newPassword: string,
+): Promise<void> {
+  return request<void>(authConfig.endpoints.resetPassword, {
+    method: 'POST',
+    body: { identifier, otp, newPassword },
+  });
+}
