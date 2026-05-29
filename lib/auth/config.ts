@@ -6,6 +6,7 @@ export const authConfig = {
     logout: '/auth/logout',
     me: '/auth/me',
     menus: '/menus/my',
+    updatePassword: '/auth/update-password',
   },
   cookies: {
     refresh: 'a_dxc_rt',

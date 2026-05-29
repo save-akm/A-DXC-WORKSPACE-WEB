@@ -116,3 +116,11 @@ export async function meRequest(accessToken: string): Promise<AuthUser> {
 export function menuRequest(accessToken: string): Promise<MenuNode[]> {
   return request<MenuNode[]>(authConfig.endpoints.menus, { accessToken });
 }
+
+export function updatePasswordRequest(accessToken: string, newPassword: string): Promise<void> {
+  return request<void>(authConfig.endpoints.updatePassword, {
+    method: 'POST',
+    accessToken,
+    body: { newPassword },
+  });
+}

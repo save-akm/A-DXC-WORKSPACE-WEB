@@ -311,7 +311,8 @@ export function AccountForm({ user }: { user: AuthUser }) {
           </div>
         </section>
 
-        {/* Avatar */}
+        {/* Avatar + Personal info — side by side */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:gap-6">
         <Section
           tone="pink"
           icon={UserCircle2}
@@ -432,6 +433,7 @@ export function AccountForm({ user }: { user: AuthUser }) {
             />
           </div>
         </Section>
+        </div>
 
         {/* Actions */}
         <div className="sticky bottom-3 z-10 flex flex-col-reverse items-stretch gap-2 rounded-2xl border border-border bg-background/80 p-2 shadow-lg shadow-black/10 ring-1 ring-inset ring-white/10 backdrop-blur-md dark:ring-white/5 sm:flex-row sm:items-center sm:justify-between sm:p-3">

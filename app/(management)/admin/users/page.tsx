@@ -23,7 +23,6 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableHeader,
@@ -135,6 +134,8 @@ const fadeLeft = (delay = 0) => ({
   transition: { duration: 0.3, delay, ease: EASE },
 });
 
+const MotionTableRow = motion.create(TableRow);
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
@@ -191,7 +192,7 @@ export default function UsersPage() {
       </motion.div>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <motion.div {...fadeUp(0.08)}><StatCard icon={Users}    label="Total Members" value={stats.total}    gradient="from-violet-500 to-fuchsia-500" /></motion.div>
         <motion.div {...fadeUp(0.14)}><StatCard icon={Activity} label="Active Now"    value={stats.active}   gradient="from-emerald-500 to-teal-500"   /></motion.div>
         <motion.div {...fadeUp(0.20)}><StatCard icon={Shield}   label="Admins"        value={stats.admins}   gradient="from-sky-500 to-blue-600"        /></motion.div>
@@ -330,7 +331,13 @@ export default function UsersPage() {
                             </tr>
                           )}
                           {paged.map((user, i) => (
-                            <TableRow key={user.id} className="group">
+                            <MotionTableRow
+                              key={user.id}
+                              className="group"
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25, delay: i * 0.04, ease: EASE }}
+                            >
                               <TableCell className="pl-4 text-xs text-muted-foreground sm:pl-5">
                                 {(page - 1) * PAGE_SIZE + i + 1}
                               </TableCell>
@@ -373,7 +380,7 @@ export default function UsersPage() {
                                   { label: "Delete", icon: Trash2, destructive: true, onClick: () => {} },
                                 ]} />
                               </TableCell>
-                            </TableRow>
+                            </MotionTableRow>
                           ))}
                         </motion.tbody>
                       </AnimatePresence>

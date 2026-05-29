@@ -7,9 +7,10 @@ import {
   meRequest,
   menuRequest,
   refreshRequest,
+  updatePasswordRequest,
 } from './api';
 import { clearRefreshCookie, getRefreshCookie, setRefreshCookie } from './cookies';
-import type { AuthUser, LoginActionState, MenuNode, RefreshActionState } from './types';
+import type { AuthUser, LoginActionState, MenuNode, RefreshActionState, UpdatePasswordActionState } from './types';
 
 function mapError(e: unknown, fallback: string): { message: string; code?: string } {
   if (e instanceof AuthApiError) {
@@ -33,7 +34,6 @@ export async function loginAction(
 
   try {
     const res = await loginRequest(identifier, password);
-    await setRefreshCookie(res.refreshToken);
     const [user, menus] = await Promise.all([
       meRequest(res.accessToken),
       menuRequest(res.accessToken).catch((e) => {
@@ -41,6 +41,24 @@ export async function loginAction(
         return [] as MenuNode[];
       }),
     ]);
+    if (res.mustChangePassword) {
+      // Don't persist the refresh cookie yet — the user must change their
+      // password first. The cookie will be set by updatePasswordAction so
+      // that a page refresh on /login keeps them on the login page (no
+      // session), not redirected to /dashboard by the middleware.
+      return {
+        status: 'success',
+        data: {
+          user,
+          menus,
+          accessToken: res.accessToken,
+          expiresAt: Date.now() + res.expiresIn * 1000,
+          mustChangePassword: true,
+          pendingRefreshToken: res.refreshToken,
+        },
+      };
+    }
+    await setRefreshCookie(res.refreshToken);
     return {
       status: 'success',
       data: {
@@ -48,7 +66,7 @@ export async function loginAction(
         menus,
         accessToken: res.accessToken,
         expiresAt: Date.now() + res.expiresIn * 1000,
-        mustChangePassword: res.mustChangePassword,
+        mustChangePassword: false,
       },
     };
   } catch (e) {
@@ -99,4 +117,29 @@ export async function logoutAction(accessToken: string | null): Promise<{ ok: bo
   }
   await clearRefreshCookie();
   return { ok: true };
+}
+
+export async function updatePasswordAction(
+  accessToken: string,
+  refreshToken: string,
+  _prev: UpdatePasswordActionState,
+  formData: FormData,
+): Promise<UpdatePasswordActionState> {
+  const newPassword = (formData.get('newPassword') ?? '').toString();
+  const confirmPassword = (formData.get('confirmPassword') ?? '').toString();
+
+  if (!newPassword) return { status: 'error', error: 'กรุณากรอกรหัสผ่านใหม่' };
+  if (newPassword.length < 8) return { status: 'error', error: 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร' };
+  if (newPassword !== confirmPassword) return { status: 'error', error: 'รหัสผ่านไม่ตรงกัน' };
+
+  try {
+    await updatePasswordRequest(accessToken, newPassword);
+    // Only activate the session cookie after the password change succeeds,
+    // so a page refresh before this point keeps the user on /login.
+    await setRefreshCookie(refreshToken);
+    return { status: 'success' };
+  } catch (e) {
+    const { message } = mapError(e, 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
+    return { status: 'error', error: message };
+  }
 }

@@ -203,9 +203,9 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <div className="container mx-auto px-6 md:px-12 lg:px-14 2xl:px-4 relative z-10 flex flex-col h-full">
+          <div className="container mx-auto px-6 md:px-12 lg:px-14 2xl:px-4 relative z-10 flex flex-col h-full pointer-events-none">
             {/* Top Bar */}
-            <div id="hero-top-bar" className="flex items-center justify-between w-full">
+            <div id="hero-top-bar" className="flex items-center justify-between w-full pointer-events-auto">
 
               <div className="flex items-center gap-3">
                 <motion.div
@@ -230,7 +230,7 @@ export default function Home() {
             </div>
 
             {/* Left content — no grid, grows to fill remaining space */}
-            <div className="grow flex flex-col justify-center relative">
+            <div className="grow flex flex-col justify-center relative pointer-events-auto">
               <div id="hero-content-left" className="space-y-6 md:space-y-8 2xl:space-y-10 max-w-xl">
                 <h1
                   ref={headingRef}
