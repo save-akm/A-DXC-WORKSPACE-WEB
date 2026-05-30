@@ -1,12 +1,13 @@
 // app/(management)/admin/permissions/_components/permissions-header.tsx
 'use client';
 
+import type React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { DirtyBadge } from './dirty-badge';
 
 interface PermissionsHeaderProps {
   icon: LucideIcon;
-  iconGradient: string;
+  iconStyle: React.CSSProperties;
   title: string;
   description: string;
   dirtyCount: number;
@@ -17,7 +18,7 @@ interface PermissionsHeaderProps {
 
 export function PermissionsHeader({
   icon: Icon,
-  iconGradient,
+  iconStyle,
   title,
   description,
   dirtyCount,
@@ -33,7 +34,8 @@ export function PermissionsHeader({
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
-              className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${iconGradient} shadow-lg`}
+              className="flex h-11 w-11 items-center justify-center rounded-xl shadow-lg"
+              style={iconStyle}
             >
               <Icon className="h-5 w-5 text-white" />
             </div>

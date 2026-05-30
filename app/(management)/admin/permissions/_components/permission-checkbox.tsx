@@ -29,6 +29,15 @@ export function PermissionCheckbox({ state, onToggle, disabled }: PermissionChec
 
   return (
     <motion.div
+      role="checkbox"
+      aria-checked={state === 'checked' || state === 'dirty-added'}
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (!disabled && (e.key === ' ' || e.key === 'Enter')) {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
       className={`${BASE} ${STATE_CLASSES[state]} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       onClick={disabled ? undefined : onToggle}
       whileTap={disabled ? undefined : { scale: 0.82 }}
