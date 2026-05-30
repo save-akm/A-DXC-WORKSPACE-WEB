@@ -1,10 +1,10 @@
 export function TeamCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      <div className="relative h-[72px] shrink-0 animate-pulse bg-muted">
-        <div className="absolute -bottom-[18px] left-[14px] h-9 w-9 animate-pulse rounded-xl bg-muted-foreground/20 border-[3px] border-card" />
+      <div className="relative h-24 shrink-0 animate-pulse bg-muted">
+        <div className="absolute -bottom-7 left-4 h-14 w-14 animate-pulse rounded-2xl border-4 border-card bg-muted-foreground/20" />
       </div>
-      <div className="flex flex-1 flex-col px-[14px] pb-[14px] pt-6">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-9">
         <div className="mb-2.5 flex items-center gap-2">
           <div className="h-4 w-24 animate-pulse rounded-md bg-muted" />
           <div className="h-4 w-14 animate-pulse rounded-full bg-muted" />
