@@ -1,12 +1,7 @@
 import { cn } from "@/lib/utils";
+import { ROLE_COLOR_BADGE_CLASSES } from "@/lib/utils/role-color";
 
-const colorMap: Record<string, string> = {
-  "bg-violet-500":  "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300",
-  "bg-fuchsia-500": "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-300",
-  "bg-sky-500":     "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
-  "bg-amber-500":   "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
-  "bg-emerald-500": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-};
+const colorMap = ROLE_COLOR_BADGE_CLASSES;
 
 export function RoleColorBadge({
   name,

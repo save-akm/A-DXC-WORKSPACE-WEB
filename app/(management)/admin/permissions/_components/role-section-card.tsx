@@ -10,6 +10,7 @@ import type {
   DirtyEntry,
 } from '../types';
 import { ROLE_ACTIONS, ACTION_LABELS } from '../types';
+import { roleBadgeClass } from '@/lib/utils/role-color';
 
 const ACCENT_STYLES: React.CSSProperties[] = [
   { background: 'linear-gradient(to bottom, #6366f1, #7c3aed)' },
@@ -19,17 +20,6 @@ const ACCENT_STYLES: React.CSSProperties[] = [
   { background: 'linear-gradient(to bottom, #0ea5e9, #3b82f6)' },
   { background: 'linear-gradient(to bottom, #10b981, #14b8a6)' },
 ];
-
-const ROLE_BADGE_STYLES: Record<string, string> = {
-  'Super Admin': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
-  Admin:        'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400',
-  Supervisor:   'bg-teal-100   text-teal-700   dark:bg-teal-500/20   dark:text-teal-400',
-  Viewer:       'bg-slate-100  text-slate-600  dark:bg-slate-500/20  dark:text-slate-400',
-};
-
-function roleBadgeClass(roleName: string): string {
-  return ROLE_BADGE_STYLES[roleName] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400';
-}
 
 function roleShortLabel(roleName: string): string {
   const map: Record<string, string> = {

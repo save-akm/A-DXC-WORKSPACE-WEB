@@ -11,6 +11,7 @@ import type {
   DirtyEntry,
 } from '../types';
 import { USER_ACTIONS, ACTION_LABELS } from '../types';
+import { roleBadgeClass } from '@/lib/utils/role-color';
 
 function makeKey(userId: string, menuId: string, action: PermissionAction): DirtyKey {
   return `user:${userId}:menu:${menuId}:action:${action}`;
@@ -39,13 +40,6 @@ function deriveAvatarColor(seed: string): string {
   return COLORS[hash % COLORS.length];
 }
 
-const ROLE_BADGE: Record<string, string> = {
-  'Super Admin': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
-  System:        'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
-  Admin:         'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400',
-  Supervisor:    'bg-teal-100   text-teal-700   dark:bg-teal-500/20   dark:text-teal-400',
-  Viewer:        'bg-slate-100  text-slate-600  dark:bg-slate-500/20  dark:text-slate-400',
-};
 
 interface UserSectionCardProps {
   menuId: string;
@@ -109,11 +103,7 @@ export function UserSectionCard({
                 </div>
               </td>
               <td className="py-3 px-3">
-                <span
-                  className={`rounded-lg px-2 py-0.5 text-[10px] font-semibold ${
-                    ROLE_BADGE[item.roleName] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'
-                  }`}
-                >
+                <span className={`rounded-lg px-2 py-0.5 text-[10px] font-semibold ${roleBadgeClass(item.roleName)}`}>
                   {item.roleName}
                 </span>
               </td>
