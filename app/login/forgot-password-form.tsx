@@ -113,7 +113,6 @@ export function ForgotPasswordForm({ onBack, onSuccess }: Props) {
                   type="text"
                   placeholder="name@a-dxc.com หรือ EMP001"
                   required
-                  autoFocus
                   autoComplete="username"
                   disabled={forgotPending}
                   value={identifier}
