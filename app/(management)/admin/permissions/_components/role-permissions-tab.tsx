@@ -60,8 +60,9 @@ export function RolePermissionsTab() {
   const handleSave = useCallback(async () => {
     if (dirty.size === 0) return;
     setSaving(true);
+    const snapshot = new Map(dirty);
     try {
-      const changes: RolePermissionPatch[] = Array.from(dirty.entries()).map(([key, entry]) => {
+      const changes: RolePermissionPatch[] = Array.from(snapshot.entries()).map(([key, entry]) => {
         const parts = key.split(':');
         return {
           roleId: parts[1],
@@ -76,7 +77,7 @@ export function RolePermissionsTab() {
           const updatedActions = { ...row.actions };
           (Object.keys(updatedActions) as RolePermissionPatch['action'][]).forEach((action) => {
             const key = `role:${row.roleId}:menu:${row.menuId}:action:${action}`;
-            const entry = dirty.get(key);
+            const entry = snapshot.get(key);
             if (entry) updatedActions[action] = entry.current;
           });
           return { ...row, actions: updatedActions };

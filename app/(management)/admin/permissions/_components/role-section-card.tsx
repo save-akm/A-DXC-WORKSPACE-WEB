@@ -1,7 +1,6 @@
 'use client';
 
 import type React from 'react';
-import { motion } from 'framer-motion';
 import { PermissionCheckbox } from './permission-checkbox';
 import type { CheckboxState } from './permission-checkbox';
 import type {
@@ -168,7 +167,7 @@ export function RoleSectionCard({ rows, accentIndex, dirty, onToggle }: RoleSect
       </table>
 
       {hasDirty && (
-        <div className="border-t border-white/[0.04] px-5 py-2 text-[10px] text-slate-600">
+        <div className="border-t border-white/[0.04] px-5 py-2 text-[10px] text-slate-600" aria-hidden="true">
           🟢 = เพิ่มใหม่ &nbsp; 🔴 = ลบออก &nbsp; (ยังไม่ได้ save)
         </div>
       )}
