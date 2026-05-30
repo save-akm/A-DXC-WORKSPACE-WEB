@@ -196,7 +196,7 @@ export function ForgotPasswordForm({ onBack, onSuccess }: Props) {
             </div>
           </div>
 
-          <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-4 text-xs bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300">
+          <div role="status" className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-4 text-xs bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300">
             <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>OTP มีอายุ 5 นาที หากไม่ได้รับ ให้กดส่งใหม่ด้านล่าง</span>
           </div>
