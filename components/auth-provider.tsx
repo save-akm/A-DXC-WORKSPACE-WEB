@@ -7,17 +7,18 @@ import { useMenuBadgesStore } from '@/lib/stores/menu-badges-store';
 import { disconnectSocket, emitLogout } from '@/lib/socket/socket-client';
 import { meAction, menuAction, refreshAction } from '@/lib/auth/actions';
 import { authConfig } from '@/lib/auth/config';
+import { clearStoredRefreshToken } from '@/lib/auth/token-storage';
 
 /**
  * Auth lifecycle:
  *   1. On mount, if there's a persisted user but no in-memory access token,
- *      call refreshAction (reads httpOnly refresh cookie) to repopulate it.
+ *      read the refresh token from localStorage/sessionStorage and call refreshAction.
  *   2. Schedule a single setTimeout to refresh `refreshLeadMs` before expiry.
  *   3. Single-flight guard prevents concurrent refresh calls.
  *   4. On focus / online events, eagerly refresh if the token is past lead.
  *
- * The access token is never persisted — only the refresh token (httpOnly cookie)
- * survives a reload. That cookie is used to re-issue an access token silently.
+ * The access token is never persisted — the refresh token lives in
+ * localStorage (rememberMe=true) or sessionStorage (rememberMe=false).
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       store.clear();
       useMenuStore.getState().clear();
       useMenuBadgesStore.getState().clear();
+      clearStoredRefreshToken();
       return false;
     })();
     inFlightRef.current = p;

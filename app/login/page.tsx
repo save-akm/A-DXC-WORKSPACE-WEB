@@ -18,6 +18,7 @@ import {
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useMenuStore } from '@/lib/stores/menu-store';
 import { loginAction } from '@/lib/auth/actions';
+import { toast } from '@/components/ui/toast';
 import { UpdatePasswordForm } from './update-password-form';
 import type { LoginActionState, SessionData } from '@/lib/auth/types';
 
@@ -66,9 +67,12 @@ export default function LoginPage() {
         expiresAt: state.data.expiresAt,
       });
       setMenus(state.data.menus);
+      toast.success(`ยินดีต้อนรับกลับมา, ${state.data.user.firstName}!`, {
+        description: 'เข้าสู่ระบบ A-DXC WorkSpace Center สำเร็จ',
+      });
       router.push(resolveTarget());
     }
-  }, [state, setSession, setMenus, router, resolveTarget]);
+  }, [state, setSession, setMenus, router, resolveTarget, remember]);
 
   const handlePasswordUpdated = useCallback(() => {
     if (!pendingSession) return;
@@ -79,7 +83,7 @@ export default function LoginPage() {
     });
     setMenus(pendingSession.menus);
     router.push(resolveTarget());
-  }, [pendingSession, setSession, setMenus, router, resolveTarget]);
+  }, [pendingSession, setSession, setMenus, router, resolveTarget, remember]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">

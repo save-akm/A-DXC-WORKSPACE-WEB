@@ -6,6 +6,7 @@ import { useMenuBadgesStore } from '@/lib/stores/menu-badges-store';
 import { disconnectSocket, emitLogout } from '@/lib/socket/socket-client';
 import { authConfig } from './config';
 import { refreshAction } from './actions';
+import { clearStoredRefreshToken } from './token-storage';
 
 const clearSessionAfterAuthFailure = () => {
   emitLogout();
@@ -13,6 +14,7 @@ const clearSessionAfterAuthFailure = () => {
   useAuthStore.getState().clear();
   useMenuStore.getState().clear();
   useMenuBadgesStore.getState().clear();
+  clearStoredRefreshToken();
 };
 
 /**
@@ -32,6 +34,7 @@ async function refreshNow(): Promise<boolean> {
       return true;
     }
     clearSessionAfterAuthFailure();
+    window.location.href = '/login';
     return false;
   })();
   try {
