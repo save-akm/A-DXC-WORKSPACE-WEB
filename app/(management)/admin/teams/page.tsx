@@ -68,14 +68,18 @@ export default function TeamsPage() {
 
   const handleSubmit = useCallback(
     async (input: CreateTeamInput) => {
-      if (editTarget) {
-        const updated = await updateTeam(editTarget.id, input);
-        setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-        toast.success('แก้ไขทีมสำเร็จ');
-      } else {
-        const created = await createTeam(input);
-        setTeams((prev) => [...prev, created]);
-        toast.success(`สร้างทีม "${created.name}" สำเร็จ`);
+      try {
+        if (editTarget) {
+          const updated = await updateTeam(editTarget.id, input);
+          setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+          toast.success('แก้ไขทีมสำเร็จ');
+        } else {
+          const created = await createTeam(input);
+          setTeams((prev) => [...prev, created]);
+          toast.success(`สร้างทีม "${created.name}" สำเร็จ`);
+        }
+      } catch {
+        toast.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
       }
     },
     [editTarget],
@@ -151,8 +155,8 @@ export default function TeamsPage() {
               </motion.div>
             ))}
 
-            {/* Add team placeholder card */}
-            <motion.button
+            {/* Add team placeholder card — hide during search */}
+            {!search && <motion.button
               key="add-card"
               type="button"
               layout
@@ -166,7 +170,7 @@ export default function TeamsPage() {
                 <Plus className="h-5 w-5" />
               </div>
               <span className="text-[12px] font-semibold">สร้างทีมใหม่</span>
-            </motion.button>
+            </motion.button>}
           </AnimatePresence>
 
           {/* Empty search state */}

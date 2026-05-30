@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import { useState } from 'react';
 import { Pencil, Trash2, FolderOpen } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ActionMenu } from '@/components/management/action-menu';
@@ -33,6 +34,12 @@ const TAG_COLORS: string[] = [
   'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
 ];
 
+const AVATAR_COLORS: string[] = [
+  'bg-indigo-600', 'bg-violet-600', 'bg-sky-600', 'bg-teal-600',
+  'bg-emerald-600', 'bg-pink-600', 'bg-rose-600', 'bg-amber-600',
+  'bg-cyan-600', 'bg-fuchsia-600',
+];
+
 function tagColorClass(tag: string): string {
   let hash = 0;
   for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0;
@@ -40,14 +47,9 @@ function tagColorClass(tag: string): string {
 }
 
 function avatarColor(seed: string): string {
-  const COLORS = [
-    'bg-indigo-600', 'bg-violet-600', 'bg-sky-600', 'bg-teal-600',
-    'bg-emerald-600', 'bg-pink-600', 'bg-rose-600', 'bg-amber-600',
-    'bg-cyan-600', 'bg-fuchsia-600',
-  ];
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return COLORS[hash % COLORS.length];
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
 interface TeamCardProps {
@@ -58,6 +60,7 @@ interface TeamCardProps {
 }
 
 export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
+  const [logoError, setLogoError] = useState(false);
   const accentIdx = index % BANNER_GRADIENTS.length;
   const bannerStyle: React.CSSProperties = { background: BANNER_GRADIENTS[accentIdx] };
 
@@ -85,8 +88,13 @@ export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
           className="absolute -bottom-[18px] left-[14px] flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border-[3px] border-card"
           style={{ background: BANNER_GRADIENTS[accentIdx] }}
         >
-          {team.logoUrl ? (
-            <img src={team.logoUrl} alt={team.name} className="h-full w-full object-cover" />
+          {team.logoUrl && !logoError ? (
+            <img
+              src={team.logoUrl}
+              alt={team.name}
+              className="h-full w-full object-cover"
+              onError={() => setLogoError(true)}
+            />
           ) : (
             <span className="text-[15px] font-extrabold text-white">{logoInitial}</span>
           )}
