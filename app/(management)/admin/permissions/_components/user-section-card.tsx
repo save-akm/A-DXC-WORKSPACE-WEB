@@ -26,19 +26,11 @@ function getCheckboxState(
   return entry.current ? 'dirty-added' : 'dirty-removed';
 }
 
-/** Derive a stable Tailwind bg-color class from a string (userId or userName). */
 function deriveAvatarColor(seed: string): string {
   const COLORS = [
-    'bg-indigo-600',
-    'bg-violet-600',
-    'bg-sky-600',
-    'bg-teal-600',
-    'bg-emerald-600',
-    'bg-pink-600',
-    'bg-rose-600',
-    'bg-amber-600',
-    'bg-cyan-600',
-    'bg-fuchsia-600',
+    'bg-indigo-600', 'bg-violet-600', 'bg-sky-600', 'bg-teal-600',
+    'bg-emerald-600', 'bg-pink-600', 'bg-rose-600', 'bg-amber-600',
+    'bg-cyan-600', 'bg-fuchsia-600',
   ];
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -48,11 +40,11 @@ function deriveAvatarColor(seed: string): string {
 }
 
 const ROLE_BADGE: Record<string, string> = {
-  'Super Admin': 'bg-indigo-500/20 text-indigo-300',
-  System: 'bg-indigo-500/20 text-indigo-300',
-  Admin: 'bg-violet-500/15 text-violet-300',
-  Supervisor: 'bg-teal-500/15 text-teal-300',
-  Viewer: 'bg-slate-500/20 text-slate-400',
+  'Super Admin': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+  System:        'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+  Admin:         'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400',
+  Supervisor:    'bg-teal-100   text-teal-700   dark:bg-teal-500/20   dark:text-teal-400',
+  Viewer:        'bg-slate-100  text-slate-600  dark:bg-slate-500/20  dark:text-slate-400',
 };
 
 interface UserSectionCardProps {
@@ -80,17 +72,17 @@ export function UserSectionCard({
     <div>
       <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-white/[0.02]">
-            <th className="py-2.5 pl-5 pr-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 w-56">
+          <tr className="bg-muted/20">
+            <th className="py-2.5 pl-5 pr-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground w-56">
               Name
             </th>
-            <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 w-32">
+            <th className="py-2.5 px-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground w-32">
               Role
             </th>
             {USER_ACTIONS.map((action) => (
               <th
                 key={action}
-                className="py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500"
+                className="py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
               >
                 {ACTION_LABELS[action]}
               </th>
@@ -101,7 +93,7 @@ export function UserSectionCard({
           {items.map((item) => (
             <tr
               key={item.userId}
-              className="border-t border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+              className="border-t border-border/50 transition-colors hover:bg-muted/30"
             >
               <td className="py-3 pl-5 pr-3">
                 <div className="flex items-center gap-2.5">
@@ -111,7 +103,7 @@ export function UserSectionCard({
                     avatarUrl={item.avatarUrl}
                     size="sm"
                   />
-                  <span className="text-[12px] font-semibold text-slate-200 truncate max-w-[160px]">
+                  <span className="truncate max-w-40 text-[12px] font-semibold text-foreground">
                     {item.userName}
                   </span>
                 </div>
@@ -119,7 +111,7 @@ export function UserSectionCard({
               <td className="py-3 px-3">
                 <span
                   className={`rounded-lg px-2 py-0.5 text-[10px] font-semibold ${
-                    ROLE_BADGE[item.roleName] ?? 'bg-slate-500/20 text-slate-400'
+                    ROLE_BADGE[item.roleName] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'
                   }`}
                 >
                   {item.roleName}
@@ -147,8 +139,8 @@ export function UserSectionCard({
         </tbody>
       </table>
 
-      <div className="flex items-center justify-between border-t border-white/[0.04] px-5 py-3">
-        <div className="text-[10px] text-slate-600">
+      <div className="flex items-center justify-between border-t border-border/50 px-5 py-3">
+        <div className="text-[10px] text-muted-foreground/70">
           {hasDirty && (
             <span aria-hidden="true">🟢 = เพิ่มใหม่ &nbsp; 🔴 = ลบออก &nbsp; (ยังไม่ได้ save) &nbsp;·&nbsp; </span>
           )}
@@ -158,7 +150,7 @@ export function UserSectionCard({
           <button
             type="button"
             onClick={onLoadMore}
-            className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+            className="text-[11px] font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors cursor-pointer"
           >
             โหลดเพิ่ม →
           </button>

@@ -30,7 +30,7 @@ export default function PermissionsPage() {
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold transition-all duration-200 cursor-pointer ${
                 isActive
                   ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30'
-                  : 'border border-slate-800 bg-[#1e293b] text-slate-500 hover:text-slate-300'
+                  : 'border border-border bg-card text-muted-foreground hover:text-foreground'
               }`}
             >
               <tab.icon className="h-3.5 w-3.5" />

@@ -163,45 +163,50 @@ export function UserPermissionsTab() {
         onDiscard={handleDiscard}
       />
 
+      {/* Search toolbar */}
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex max-w-xs flex-1 items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2">
-          <Search className="h-3.5 w-3.5 text-slate-500" />
+        <div className="flex max-w-xs flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <input
             type="text"
             placeholder="ค้นหาชื่อหรือ role…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[12px] text-slate-200 placeholder:text-slate-600 outline-none"
+            className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground/50 outline-none"
           />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[14px] border border-white/[0.06] bg-[#131929]">
-        <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#1a2236] px-5 py-3.5">
+      {/* User section card */}
+      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+        {/* Header with menu dropdown */}
+        <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3.5">
           <div className="flex items-center gap-3">
             <div
-              className="h-[18px] w-[3px] rounded-full"
+              className="h-4.5 w-0.75 shrink-0 rounded-full"
               style={{ background: 'linear-gradient(to bottom, #6366f1, #7c3aed)' }}
             />
-            <span className="text-[13px] font-bold text-white">
+            <span className="text-[13px] font-bold text-foreground">
               {selectedMenu?.name ?? '—'}
             </span>
-            <span className="text-[10px] text-slate-500">{total} users</span>
+            <span className="text-[10px] text-muted-foreground">{total} users</span>
           </div>
+
+          {/* Menu dropdown */}
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-500">Select Menu:</span>
+              <span className="text-[11px] text-muted-foreground">Select Menu:</span>
               <button
                 type="button"
                 onClick={() => setShowMenuDropdown((v) => !v)}
-                className="flex min-w-[130px] items-center justify-between gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 cursor-pointer hover:border-slate-600 transition-colors"
+                className="flex min-w-32.5 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-[11px] text-foreground cursor-pointer hover:border-border/80 transition-colors"
               >
                 <span>{selectedMenu?.name ?? 'เลือก menu'}</span>
-                <ChevronDown className="h-3 w-3 text-slate-500" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </button>
             </div>
             {showMenuDropdown && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+              <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-popover shadow-lg">
                 {menus.map((menu) => (
                   <button
                     key={menu.id}
@@ -209,8 +214,8 @@ export function UserPermissionsTab() {
                     onClick={() => handleMenuChange(menu.id)}
                     className={`w-full px-4 py-2.5 text-left text-[12px] transition-colors cursor-pointer ${
                       menu.id === selectedMenuId
-                        ? 'bg-indigo-500/20 text-indigo-300'
-                        : 'text-slate-300 hover:bg-white/5'
+                        ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                        : 'text-foreground hover:bg-muted/50'
                     }`}
                   >
                     {menu.name}
@@ -222,7 +227,7 @@ export function UserPermissionsTab() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-slate-500 text-sm">
+          <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
             กำลังโหลด…
           </div>
         ) : (

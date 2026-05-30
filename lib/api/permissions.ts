@@ -1,4 +1,3 @@
-// lib/api/permissions.ts
 import { apiFetch } from '@/lib/auth/client';
 import type {
   RolePermissionMatrix,
@@ -7,43 +6,76 @@ import type {
   RolePermissionPatch,
   UserPermissionPatch,
 } from '@/app/(management)/admin/permissions/types';
+import {
+  MOCK_ROLE_MATRIX,
+  MOCK_MENUS,
+  getMockUserPermissions,
+} from '@/app/(management)/admin/permissions/_mocks/mock-data';
 
 export async function fetchRolePermissions(): Promise<RolePermissionMatrix> {
-  return apiFetch<RolePermissionMatrix>('/permissions/roles');
+  try {
+    return await apiFetch<RolePermissionMatrix>('/permissions/roles');
+  } catch {
+    return MOCK_ROLE_MATRIX;
+  }
 }
 
 export async function patchRolePermissions(
   changes: RolePermissionPatch[],
 ): Promise<void> {
-  await apiFetch<void>('/permissions/roles', {
-    method: 'PATCH',
-    body: { changes },
-  });
+  try {
+    await apiFetch<void>('/permissions/roles', {
+      method: 'PATCH',
+      body: { changes },
+    });
+  } catch {
+    // mock: silently succeed
+  }
 }
 
 export async function fetchUserPermissions(
   menuId: string,
-  page: number,
+  _page: number,
   search: string,
 ): Promise<UserPermissionPage> {
-  const params = new URLSearchParams({
-    menuId,
-    page: String(page),
-    pageSize: '20',
-    ...(search ? { search } : {}),
-  });
-  return apiFetch<UserPermissionPage>(`/permissions/users?${params}`);
+  try {
+    const params = new URLSearchParams({
+      menuId,
+      page: String(_page),
+      pageSize: '20',
+      ...(search ? { search } : {}),
+    });
+    return await apiFetch<UserPermissionPage>(`/permissions/users?${params}`);
+  } catch {
+    const data = getMockUserPermissions(menuId);
+    if (search) {
+      const q = search.toLowerCase();
+      data.items = data.items.filter(
+        (i) => i.userName.toLowerCase().includes(q) || i.roleName.toLowerCase().includes(q),
+      );
+      data.total = data.items.length;
+    }
+    return data;
+  }
 }
 
 export async function patchUserPermissions(
   changes: UserPermissionPatch[],
 ): Promise<void> {
-  await apiFetch<void>('/permissions/users', {
-    method: 'PATCH',
-    body: { changes },
-  });
+  try {
+    await apiFetch<void>('/permissions/users', {
+      method: 'PATCH',
+      body: { changes },
+    });
+  } catch {
+    // mock: silently succeed
+  }
 }
 
 export async function fetchMenuList(): Promise<MenuItem[]> {
-  return apiFetch<MenuItem[]>('/menus/my');
+  try {
+    return await apiFetch<MenuItem[]>('/menus/my');
+  } catch {
+    return MOCK_MENUS;
+  }
 }

@@ -21,14 +21,14 @@ const ACCENT_STYLES: React.CSSProperties[] = [
 ];
 
 const ROLE_BADGE_STYLES: Record<string, string> = {
-  'Super Admin': 'bg-indigo-500/20 text-indigo-300',
-  Admin: 'bg-violet-500/15 text-violet-300',
-  Supervisor: 'bg-teal-500/15 text-teal-300',
-  Viewer: 'bg-slate-500/20 text-slate-400',
+  'Super Admin': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400',
+  Admin:        'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400',
+  Supervisor:   'bg-teal-100   text-teal-700   dark:bg-teal-500/20   dark:text-teal-400',
+  Viewer:       'bg-slate-100  text-slate-600  dark:bg-slate-500/20  dark:text-slate-400',
 };
 
 function roleBadgeClass(roleName: string): string {
-  return ROLE_BADGE_STYLES[roleName] ?? 'bg-slate-500/20 text-slate-400';
+  return ROLE_BADGE_STYLES[roleName] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400';
 }
 
 function roleShortLabel(roleName: string): string {
@@ -95,34 +95,36 @@ export function RoleSectionCard({ rows, accentIndex, dirty, onToggle }: RoleSect
   );
 
   return (
-    <div className="overflow-hidden rounded-[14px] border border-white/[0.06] bg-[#131929]">
-      <div className="flex items-center justify-between border-b border-white/[0.06] bg-[#1a2236] px-5 py-3.5">
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      {/* Section header */}
+      <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="h-[18px] w-[3px] rounded-full" style={accentStyle} />
-          <span className="text-[13px] font-bold text-white">{menuName}</span>
-          <span className="text-[10px] text-slate-500">
+          <div className="h-4.5 w-0.75 shrink-0 rounded-full" style={accentStyle} />
+          <span className="text-[13px] font-bold text-foreground">{menuName}</span>
+          <span className="text-[10px] text-muted-foreground">
             {rows.length} roles · {ROLE_ACTIONS.length} permissions
           </span>
         </div>
         <button
           type="button"
           onClick={handleSelectAll}
-          className="rounded-md border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors cursor-pointer"
+          className="rounded-md border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium text-indigo-600 hover:bg-indigo-500/20 dark:text-indigo-400 transition-colors cursor-pointer"
         >
           Select All
         </button>
       </div>
 
+      {/* Permission table */}
       <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-white/[0.02]">
-            <th className="py-2.5 pl-5 pr-3 text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 w-44">
+          <tr className="bg-muted/20">
+            <th className="py-2.5 pl-5 pr-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground w-44">
               Role
             </th>
             {ROLE_ACTIONS.map((action) => (
               <th
                 key={action}
-                className="py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500"
+                className="py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
               >
                 {ACTION_LABELS[action]}
               </th>
@@ -133,10 +135,10 @@ export function RoleSectionCard({ rows, accentIndex, dirty, onToggle }: RoleSect
           {rows.map((row) => (
             <tr
               key={row.roleId}
-              className="border-t border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+              className="border-t border-border/50 transition-colors hover:bg-muted/30"
             >
               <td className="py-3 pl-5 pr-3">
-                <span className="text-[12px] font-semibold text-slate-200">{row.roleName}</span>
+                <span className="text-[12px] font-semibold text-foreground">{row.roleName}</span>
                 <span
                   className={`ml-1.5 rounded-lg px-1.5 py-0.5 text-[9px] font-bold ${roleBadgeClass(row.roleName)}`}
                 >
@@ -167,7 +169,7 @@ export function RoleSectionCard({ rows, accentIndex, dirty, onToggle }: RoleSect
       </table>
 
       {hasDirty && (
-        <div className="border-t border-white/[0.04] px-5 py-2 text-[10px] text-slate-600" aria-hidden="true">
+        <div className="border-t border-border/50 px-5 py-2 text-[10px] text-muted-foreground/60" aria-hidden="true">
           🟢 = เพิ่มใหม่ &nbsp; 🔴 = ลบออก &nbsp; (ยังไม่ได้ save)
         </div>
       )}
