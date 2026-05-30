@@ -1,7 +1,9 @@
 export function TeamCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      <div className="h-[72px] shrink-0 animate-pulse bg-muted" />
+      <div className="relative h-[72px] shrink-0 animate-pulse bg-muted">
+        <div className="absolute -bottom-[18px] left-[14px] h-9 w-9 animate-pulse rounded-xl bg-muted-foreground/20 border-[3px] border-card" />
+      </div>
       <div className="flex flex-1 flex-col px-[14px] pb-[14px] pt-6">
         <div className="mb-2.5 flex items-center gap-2">
           <div className="h-4 w-24 animate-pulse rounded-md bg-muted" />

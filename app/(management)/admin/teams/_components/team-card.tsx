@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, FolderOpen } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ActionMenu } from '@/components/management/action-menu';
 import type { Team } from '../types';
@@ -138,7 +138,7 @@ export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
             <span className="text-[10px] text-muted-foreground/70">{team.members.length} คน</span>
           </div>
           <div className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold ${PROJECT_BADGE_CLASSES[accentIdx]}`}>
-            <span>📁</span>
+            <FolderOpen className="h-3 w-3" />
             <span>{team._count.projects} projects</span>
           </div>
         </div>
