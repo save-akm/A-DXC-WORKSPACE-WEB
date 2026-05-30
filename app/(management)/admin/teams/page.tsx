@@ -8,7 +8,7 @@ import { StatCard } from '@/components/management/stat-card';
 import { fetchTeams, createTeam, updateTeam, deleteTeam } from '@/lib/api/teams';
 import { TeamCard } from './_components/team-card';
 import { TeamCardSkeleton } from './_components/team-card-skeleton';
-import { TeamDrawer } from './_components/team-drawer';
+import { TeamModal } from './_components/team-modal';
 import type { Team, CreateTeamInput } from './types';
 
 export default function TeamsPage() {
@@ -182,7 +182,7 @@ export default function TeamsPage() {
         </div>
       )}
 
-      <TeamDrawer
+      <TeamModal
         open={drawerOpen}
         team={editTarget}
         onClose={() => setDrawerOpen(false)}
