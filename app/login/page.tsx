@@ -20,6 +20,7 @@ import { useMenuStore } from '@/lib/stores/menu-store';
 import { loginAction } from '@/lib/auth/actions';
 import { toast } from '@/components/ui/toast';
 import { UpdatePasswordForm } from './update-password-form';
+import { ForgotPasswordForm } from './forgot-password-form';
 import type { LoginActionState, SessionData } from '@/lib/auth/types';
 
 const initialState: LoginActionState = { status: 'idle' };
@@ -47,7 +48,7 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [view, setView] = useState<'login' | 'update-password'>('login');
+  const [view, setView] = useState<'login' | 'update-password' | 'forgot-password'>('login');
   const [pendingSession, setPendingSession] = useState<SessionData | null>(null);
 
   const resolveTarget = useCallback(() => {
@@ -84,6 +85,13 @@ export default function LoginPage() {
     setMenus(pendingSession.menus);
     router.push(resolveTarget());
   }, [pendingSession, setSession, setMenus, router, resolveTarget]);
+
+  const handleForgotPasswordSuccess = useCallback(() => {
+    setView('login');
+    toast.success('เปลี่ยนรหัสผ่านสำเร็จ', {
+      description: 'กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่',
+    });
+  }, []);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
@@ -220,6 +228,7 @@ export default function LoginPage() {
                     </label>
                     <button
                       type="button"
+                      onClick={() => setView('forgot-password')}
                       className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer font-medium"
                     >
                       ลืมรหัสผ่าน?
@@ -280,7 +289,7 @@ export default function LoginPage() {
               </div>
             </div>
           </motion.div>
-        ) : (
+        ) : view === 'update-password' ? (
           <motion.div
             key="update-password"
             initial={{ x: 80, opacity: 0, scale: 0.97 }}
@@ -299,6 +308,25 @@ export default function LoginPage() {
                     onSuccess={handlePasswordUpdated}
                   />
                 )}
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="forgot-password"
+            initial={{ x: 80, opacity: 0, scale: 0.97 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
+            exit={{ x: -80, opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full max-w-md"
+          >
+            <div className={CARD_CLASS}>
+              {CARD_GLOW}
+              <div className="relative p-7 sm:p-9">
+                <ForgotPasswordForm
+                  onBack={() => setView('login')}
+                  onSuccess={handleForgotPasswordSuccess}
+                />
               </div>
             </div>
           </motion.div>
