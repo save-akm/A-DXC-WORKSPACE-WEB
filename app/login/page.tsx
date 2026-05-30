@@ -72,7 +72,7 @@ export default function LoginPage() {
       });
       router.push(resolveTarget());
     }
-  }, [state, setSession, setMenus, router, resolveTarget, remember]);
+  }, [state, setSession, setMenus, router, resolveTarget]);
 
   const handlePasswordUpdated = useCallback(() => {
     if (!pendingSession) return;
@@ -83,7 +83,7 @@ export default function LoginPage() {
     });
     setMenus(pendingSession.menus);
     router.push(resolveTarget());
-  }, [pendingSession, setSession, setMenus, router, resolveTarget, remember]);
+  }, [pendingSession, setSession, setMenus, router, resolveTarget]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
