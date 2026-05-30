@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, Users, ChevronDown } from 'lucide-react';
 import { toast } from '@/components/ui/toast';
 import { fetchUserPermissions, fetchMenuList, patchUserPermissions } from '@/lib/api/permissions';
@@ -26,10 +26,12 @@ export function UserPermissionsTab() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState<Map<DirtyKey, DirtyEntry>>(new Map());
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMenuList()
@@ -41,17 +43,32 @@ export function UserPermissionsTab() {
   }, []);
 
   useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  useEffect(() => {
     if (!selectedMenuId) return;
     setLoading(true);
     setPage(1);
-    fetchUserPermissions(selectedMenuId, 1, search)
+    fetchUserPermissions(selectedMenuId, 1, debouncedSearch)
       .then((data) => {
         setItems(data.items);
         setTotal(data.total);
       })
       .catch(() => toast.error('ไม่สามารถโหลดข้อมูล users ได้'))
       .finally(() => setLoading(false));
-  }, [selectedMenuId, search]);
+  }, [selectedMenuId, debouncedSearch]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowMenuDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const selectedMenu = menus.find((m) => m.id === selectedMenuId);
   const dirtyCount = useMemo(() => dirty.size, [dirty]);
@@ -90,13 +107,13 @@ export function UserPermissionsTab() {
     if (!selectedMenuId) return;
     const nextPage = page + 1;
     try {
-      const data = await fetchUserPermissions(selectedMenuId, nextPage, search);
+      const data = await fetchUserPermissions(selectedMenuId, nextPage, debouncedSearch);
       setItems((prev) => [...prev, ...data.items]);
       setPage(nextPage);
     } catch {
       toast.error('ไม่สามารถโหลดข้อมูลเพิ่มได้');
     }
-  }, [selectedMenuId, page, search]);
+  }, [selectedMenuId, page, debouncedSearch]);
 
   const handleSave = useCallback(async () => {
     if (dirty.size === 0) return;
@@ -171,7 +188,7 @@ export function UserPermissionsTab() {
             </span>
             <span className="text-[10px] text-slate-500">{total} users</span>
           </div>
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-slate-500">Select Menu:</span>
               <button
