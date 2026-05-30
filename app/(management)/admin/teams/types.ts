@@ -47,3 +47,9 @@ export interface CreateTeamInput {
 }
 
 export type UpdateTeamInput = Partial<CreateTeamInput>;
+
+/** Envelope returned by POST /teams and PATCH /teams/:id */
+export interface TeamMutationResponse {
+  status: string;
+  data: Team;
+}

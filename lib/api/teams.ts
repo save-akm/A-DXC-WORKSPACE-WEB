@@ -1,6 +1,6 @@
 // lib/api/teams.ts
 import { apiFetch } from '@/lib/auth/client';
-import type { Team, TeamsApiResponse, CreateTeamInput, UpdateTeamInput } from '@/app/(management)/admin/teams/types';
+import type { Team, TeamsApiResponse, CreateTeamInput, UpdateTeamInput, TeamMutationResponse } from '@/app/(management)/admin/teams/types';
 import { MOCK_TEAMS } from '@/app/(management)/admin/teams/_mocks/mock-data';
 
 export async function fetchTeams(): Promise<Team[]> {
@@ -13,7 +13,7 @@ export async function fetchTeams(): Promise<Team[]> {
 }
 
 export async function createTeam(input: CreateTeamInput): Promise<Team> {
-  const res = await apiFetch<{ status: string; data: Team }>('/teams', {
+  const res = await apiFetch<TeamMutationResponse>('/teams', {
     method: 'POST',
     body: input,
   });
@@ -21,7 +21,7 @@ export async function createTeam(input: CreateTeamInput): Promise<Team> {
 }
 
 export async function updateTeam(id: string, input: UpdateTeamInput): Promise<Team> {
-  const res = await apiFetch<{ status: string; data: Team }>(`/teams/${id}`, {
+  const res = await apiFetch<TeamMutationResponse>(`/teams/${id}`, {
     method: 'PATCH',
     body: input,
   });
