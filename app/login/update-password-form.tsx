@@ -17,6 +17,11 @@ const initialState: UpdatePasswordActionState = { status: 'idle' };
 export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Props) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const tooShort = newPassword.length > 0 && newPassword.length < 8;
+  const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   const [state, formAction, pending] = useActionState<UpdatePasswordActionState, FormData>(
     (prev, formData) => updatePasswordAction(accessToken, refreshToken, prev, formData),
@@ -65,12 +70,17 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
               autoFocus
               autoComplete="new-password"
               disabled={pending}
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm
                 bg-zinc-100/70 dark:bg-white/5
-                border border-zinc-200 dark:border-white/10
-                text-foreground placeholder:text-muted-foreground/50
-                outline-none focus:border-ring focus:ring-2 focus:ring-ring/25 focus:bg-white dark:focus:bg-white/8
-                transition-colors disabled:opacity-60"
+                border text-foreground placeholder:text-muted-foreground/50
+                outline-none focus:ring-2 focus:bg-white dark:focus:bg-white/8
+                transition-colors disabled:opacity-60
+                ${tooShort
+                  ? 'border-destructive/60 focus:border-destructive focus:ring-destructive/25'
+                  : 'border-zinc-200 dark:border-white/10 focus:border-ring focus:ring-ring/25'
+                }`}
             />
             <button
               type="button"
@@ -81,6 +91,9 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
               {showNew ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
           </div>
+          {tooShort && (
+            <p className="mt-1.5 text-[11px] text-destructive">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</p>
+          )}
         </div>
 
         <div>
@@ -100,12 +113,17 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
               required
               autoComplete="new-password"
               disabled={pending}
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm
                 bg-zinc-100/70 dark:bg-white/5
-                border border-zinc-200 dark:border-white/10
-                text-foreground placeholder:text-muted-foreground/50
-                outline-none focus:border-ring focus:ring-2 focus:ring-ring/25 focus:bg-white dark:focus:bg-white/8
-                transition-colors disabled:opacity-60"
+                border text-foreground placeholder:text-muted-foreground/50
+                outline-none focus:ring-2 focus:bg-white dark:focus:bg-white/8
+                transition-colors disabled:opacity-60
+                ${mismatch
+                  ? 'border-destructive/60 focus:border-destructive focus:ring-destructive/25'
+                  : 'border-zinc-200 dark:border-white/10 focus:border-ring focus:ring-ring/25'
+                }`}
             />
             <button
               type="button"
@@ -116,6 +134,9 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
               {showConfirm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
           </div>
+          {mismatch && (
+            <p className="mt-1.5 text-[11px] text-destructive">รหัสผ่านไม่ตรงกัน</p>
+          )}
         </div>
 
         {state.status === 'error' && (
@@ -131,7 +152,7 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
 
         <motion.button
           type="submit"
-          disabled={pending}
+          disabled={pending || tooShort || mismatch}
           whileHover={pending ? undefined : { scale: 1.02 }}
           whileTap={pending ? undefined : { scale: 0.97 }}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold

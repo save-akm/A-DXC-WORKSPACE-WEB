@@ -1,5 +1,6 @@
 'use server';
 
+import { headers } from 'next/headers';
 import {
   AuthApiError,
   forgotPasswordRequest,
@@ -36,7 +37,8 @@ export async function loginAction(
   }
 
   try {
-    const res = await loginRequest(identifier, password, rememberMe);
+    const ua = (await headers()).get('user-agent') ?? undefined;
+    const res = await loginRequest(identifier, password, rememberMe, ua);
     const [user, menus] = await Promise.all([
       meRequest(res.accessToken),
       menuRequest(res.accessToken).catch((e) => {
@@ -82,7 +84,8 @@ export async function refreshAction(): Promise<RefreshActionState> {
   const token = await getRefreshCookie();
   if (!token) return { status: 'error', error: 'NO_REFRESH_TOKEN' };
   try {
-    const res = await refreshRequest(token);
+    const ua = (await headers()).get('user-agent') ?? undefined;
+    const res = await refreshRequest(token, ua);
     await setRefreshCookie(res.refreshToken);
     return {
       status: 'success',
@@ -114,7 +117,10 @@ export async function menuAction(accessToken: string): Promise<MenuNode[]> {
 
 export async function logoutAction(accessToken: string | null): Promise<{ ok: boolean }> {
   try {
-    if (accessToken) await logoutRequest(accessToken);
+    if (accessToken) {
+      const ua = (await headers()).get('user-agent') ?? undefined;
+      await logoutRequest(accessToken, ua);
+    }
   } catch {
     // best effort — server-side revocation may fail (e.g. token already expired)
   }

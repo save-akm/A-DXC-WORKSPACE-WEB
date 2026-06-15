@@ -110,6 +110,8 @@ export function FloatingNav() {
 
     if (targets.length === 0) return;
 
+    const lastTarget = targets[targets.length - 1];
+
     const io = new IntersectionObserver(
       (entries) => {
         // Pick the entry most centered in the viewport.
@@ -128,7 +130,19 @@ export function FloatingNav() {
     // Default to first landing section when warp completes.
     setActiveSection((cur) => (cur === 'hero' ? targets[0].id : cur));
 
-    return () => io.disconnect();
+    // Last section may never enter the detection zone because there's no
+    // content below it to scroll — force it active when near the page bottom.
+    const onScroll = () => {
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 150) {
+        setActiveSection(lastTarget.id);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener('scroll', onScroll);
+    };
   }, [warpReady]);
 
   // When warp progress drops back below threshold, return to hero.

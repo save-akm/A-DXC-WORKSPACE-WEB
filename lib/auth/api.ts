@@ -48,14 +48,15 @@ function readMessage(body: unknown, fallback: string): { message: string; code?:
 
 async function request<T>(
   path: string,
-  init: { method?: string; body?: unknown; accessToken?: string } = {},
+  init: { method?: string; body?: unknown; accessToken?: string; userAgent?: string } = {},
 ): Promise<T> {
-  const { method = 'GET', body, accessToken } = init;
+  const { method = 'GET', body, accessToken, userAgent } = init;
   const res = await fetch(authConfig.apiUrl + path, {
     method,
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(userAgent ? { 'User-Agent': userAgent } : {}),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     cache: 'no-store',
@@ -87,24 +88,27 @@ async function request<T>(
   return parsed as T;
 }
 
-export function loginRequest(identifier: string, password: string, rememberMe: boolean) {
+export function loginRequest(identifier: string, password: string, rememberMe: boolean, userAgent?: string) {
   return request<LoginResponse>(authConfig.endpoints.login, {
     method: 'POST',
     body: { identifier, password, rememberMe },
+    userAgent,
   });
 }
 
-export function refreshRequest(refreshToken: string) {
+export function refreshRequest(refreshToken: string, userAgent?: string) {
   return request<RefreshResponse>(authConfig.endpoints.refresh, {
     method: 'POST',
     body: { refreshToken },
+    userAgent,
   });
 }
 
-export function logoutRequest(accessToken: string) {
+export function logoutRequest(accessToken: string, userAgent?: string) {
   return request<{ success: boolean }>(authConfig.endpoints.logout, {
     method: 'POST',
     accessToken,
+    userAgent,
   });
 }
 

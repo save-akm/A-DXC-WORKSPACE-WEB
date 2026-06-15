@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   Bell,
   Check,
+  CheckCircle2,
   Eye,
   EyeOff,
   History,
@@ -23,6 +24,7 @@ import {
   Sparkles,
   Tablet,
   X,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,8 @@ import {
 import { toast } from '@/components/ui/toast';
 import {
   changePasswordRequest,
+  fetchLoginHistoryRequest,
+  fetchSessionsRequest,
   revokeOtherSessionsRequest,
   updateSecurityRequest,
   type ActiveSession,
@@ -159,12 +163,27 @@ export function SecurityForm({ preset }: SecurityFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [sessions, setSessions] = useState<ActiveSession[]>(fullPreset.activeSessions);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
     form.reset(toDefaults(fullPreset));
-    setSessions(fullPreset.activeSessions);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullPreset]);
+
+  useEffect(() => {
+    setSessionsLoading(true);
+    fetchSessionsRequest()
+      .then(setSessions)
+      .catch(() => {})
+      .finally(() => setSessionsLoading(false));
+    setHistoryLoading(true);
+    fetchLoginHistoryRequest()
+      .then(setLoginHistory)
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
+  }, []);
 
   const watched = useWatch({ control: form.control });
   const isDirty = form.formState.isDirty;
@@ -399,24 +418,55 @@ export function SecurityForm({ preset }: SecurityFormProps) {
             title="ประวัติการเข้าสู่ระบบ"
             subtitle="กิจกรรมการเข้าสู่ระบบล่าสุดในบัญชีของคุณ"
           >
-            {fullPreset.loginHistory.length === 0 ? (
+            {historyLoading ? (
+              <div className="space-y-px">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="h-10 animate-pulse rounded-lg border border-border bg-background/50"
+                  />
+                ))}
+              </div>
+            ) : loginHistory.length === 0 ? (
               <EmptyState text="ยังไม่มีประวัติการเข้าสู่ระบบ" />
             ) : (
               <ul className="divide-y divide-border/60">
-                {fullPreset.loginHistory.map((entry) => (
+                {loginHistory.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex flex-col gap-1 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-2 py-3 text-xs"
                   >
-                    <div className="font-mono text-xs text-foreground/80">
-                      {formatTimestamp(entry.occurredAt)}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {entry.status === 'SUCCESS' ? (
+                          <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+                        ) : (
+                          <XCircle className="size-3.5 shrink-0 text-rose-500" />
+                        )}
+                        <span
+                          className={cn(
+                            'font-semibold',
+                            entry.status === 'SUCCESS'
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400',
+                          )}
+                        >
+                          {entry.status === 'SUCCESS' ? 'สำเร็จ' : 'ล้มเหลว'}
+                        </span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">
+                        {formatTimestamp(entry.createdAt)}
+                      </span>
                     </div>
-                    <div className="font-mono text-xs text-muted-foreground">
-                      {entry.ipAddress}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="size-3 text-sky-500" />
-                      {entry.location ?? '—'}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                      <span className="font-mono">{entry.ipAddress}</span>
+                      <span>{entry.browser} · {entry.os}</span>
+                      {entry.location ? (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="size-3 text-sky-500" />
+                          {entry.location}
+                        </span>
+                      ) : null}
                     </div>
                   </li>
                 ))}
@@ -430,7 +480,16 @@ export function SecurityForm({ preset }: SecurityFormProps) {
             title="เซสชันที่ใช้งานอยู่"
             subtitle="เซสชันที่กำลังใช้งานในบัญชีของคุณ"
           >
-            {sessions.length === 0 ? (
+            {sessionsLoading ? (
+              <div className="space-y-2">
+                {[0, 1].map((i) => (
+                  <div
+                    key={i}
+                    className="h-14 animate-pulse rounded-xl border border-border bg-background/50"
+                  />
+                ))}
+              </div>
+            ) : sessions.length === 0 ? (
               <EmptyState text="ไม่มีเซสชันอื่น" />
             ) : (
               <>

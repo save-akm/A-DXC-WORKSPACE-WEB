@@ -200,13 +200,13 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* Workspace card gradient — dark mode (deep violet → fuchsia → amber → rose, loop) */
+  /* Workspace card gradient — dark mode (deep violet → fuchsia → rose-pink → violet, loop) */
   --ws-grad-1: oklch(0.38 0.27 290);
-  --ws-grad-2: oklch(0.44 0.30 330);
-  --ws-grad-3: oklch(0.70 0.19 72);
-  --ws-grad-4: oklch(0.47 0.28 350);
-  --ws-glow-a: oklch(0.70 0.23 72 / 0.55);
-  --ws-glow-b: oklch(0.62 0.30 330 / 0.48);
+  --ws-grad-2: oklch(0.48 0.31 325);
+  --ws-grad-3: oklch(0.56 0.27 348);
+  --ws-grad-4: oklch(0.40 0.26 295);
+  --ws-glow-a: oklch(0.65 0.28 325 / 0.55);
+  --ws-glow-b: oklch(0.50 0.24 290 / 0.45);
 
   /* Sidebar section + menu variables — baseline dark fallback */
   --sidebar-mainmenu-text: oklch(0.68 0.04 260);

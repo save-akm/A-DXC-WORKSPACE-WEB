@@ -8,56 +8,11 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { SecurityForm } from './components/security-form';
 import type { SecurityPreset } from './components/security-form';
 
-// TODO: เปลี่ยนเป็นโหลดจาก API จริงเมื่อ backend พร้อม
 const mockPreset: SecurityPreset = {
   twoFactorEnabled: false,
   loginAlertsEnabled: true,
-  loginHistory: [
-    {
-      id: 'h1',
-      occurredAt: '2023-07-20T14:30:00Z',
-      ipAddress: '192.168.1.1',
-      location: 'Ayutthaya, TH',
-    },
-    {
-      id: 'h2',
-      occurredAt: '2023-07-19T09:15:00Z',
-      ipAddress: '10.0.0.1',
-      location: 'Prachin buri, TH',
-    },
-    {
-      id: 'h3',
-      occurredAt: '2023-07-18T22:45:00Z',
-      ipAddress: '172.16.0.1',
-      location: 'Prachin buri, TH',
-    },
-  ],
-  activeSessions: [
-    {
-      id: 's1',
-      device: 'laptop',
-      browser: 'Chrome',
-      os: 'Windows 10',
-      current: true,
-      lastActiveAt: new Date().toISOString(),
-    },
-    {
-      id: 's2',
-      device: 'smartphone',
-      browser: 'Safari',
-      os: 'iOS 15',
-      current: false,
-      lastActiveAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    },
-    {
-      id: 's3',
-      device: 'tablet',
-      browser: 'Firefox',
-      os: 'Android 12',
-      current: false,
-      lastActiveAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    },
-  ],
+  loginHistory: [],
+  activeSessions: [],
 };
 
 export default function SecurityPage() {

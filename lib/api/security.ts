@@ -1,5 +1,6 @@
 import { authConfig } from '@/lib/auth/config';
 import { AuthApiError } from '@/lib/auth/api';
+import { apiFetch } from '@/lib/auth/client';
 
 interface ApiEnvelope<T> {
   status: string;
@@ -50,9 +51,9 @@ const endpoints = {
   changePassword: '/me/password',
   twoFactor: '/me/2fa',
   loginAlerts: '/me/login-alerts',
-  loginHistory: '/me/login-history',
-  sessions: '/me/sessions',
-  revokeOtherSessions: '/me/sessions/revoke-others',
+  loginHistory: '/auth/me/login-history',
+  sessions: '/auth/sessions',
+  revokeOtherSessions: '/auth/sessions/revoke-others',
 } as const;
 
 export interface ChangePasswordBody {
@@ -61,7 +62,6 @@ export interface ChangePasswordBody {
 }
 
 export interface SecurityUpdateBody {
-  /** Hash ใหม่หลังเปลี่ยนรหัสผ่าน — backend ส่ง timestamp กลับมาก็พอ */
   currentPassword?: string;
   newPassword?: string;
   twoFactorEnabled?: boolean;
@@ -70,10 +70,13 @@ export interface SecurityUpdateBody {
 
 export interface LoginHistoryEntry {
   id: string;
-  occurredAt: string; // ISO
+  status: 'SUCCESS' | 'FAILURE';
   ipAddress: string;
   location: string | null;
-  userAgent?: string | null;
+  deviceType: string;
+  browser: string;
+  os: string;
+  createdAt: string; // ISO
 }
 
 export interface ActiveSession {
@@ -120,10 +123,54 @@ export async function updateSecurityRequest(
 export async function revokeOtherSessionsRequest(
   accessToken: string,
 ): Promise<{ revoked: number }> {
-  const res = await fetch(authConfig.apiUrl + endpoints.revokeOtherSessions, {
+  const res = await fetch('/api/_proxy' + endpoints.revokeOtherSessions, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: 'no-store',
   });
   return unwrap<{ revoked: number }>(res);
+}
+
+// ── Read-only fetches via apiFetch (handles 401→refresh→retry automatically) ──
+
+interface ApiSessionRaw {
+  id: string;
+  deviceType: string;
+  browser: string;
+  os: string;
+  location: string | null;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
+function normalizeDevice(deviceType: string): ActiveSession['device'] {
+  const t = deviceType.toLowerCase();
+  if (t === 'laptop') return 'laptop';
+  if (t === 'desktop') return 'desktop';
+  if (t === 'smartphone' || t === 'mobile') return 'smartphone';
+  if (t === 'tablet') return 'tablet';
+  return 'unknown';
+}
+
+export async function fetchSessionsRequest(): Promise<ActiveSession[]> {
+  const env = await apiFetch<ApiEnvelope<{ sessions: ApiSessionRaw[] }>>(endpoints.sessions);
+  return (env?.data?.sessions ?? []).map((s) => ({
+    id: s.id,
+    device: normalizeDevice(s.deviceType),
+    browser: s.browser,
+    os: s.os,
+    current: s.isCurrent,
+    lastActiveAt: s.createdAt,
+  }));
+}
+
+export async function fetchLoginHistoryRequest(
+  page = 1,
+  limit = 20,
+): Promise<LoginHistoryEntry[]> {
+  const env = await apiFetch<ApiEnvelope<{ items: LoginHistoryEntry[] }>>(
+    `${endpoints.loginHistory}?page=${page}&limit=${limit}`,
+  );
+  return env?.data?.items ?? [];
 }

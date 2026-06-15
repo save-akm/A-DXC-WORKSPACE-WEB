@@ -30,8 +30,9 @@ export function SidebarWorkspace() {
     >
       <motion.button
         type="button"
+        aria-label={workspace.name}
         whileHover={reducedMotion ? undefined : { y: -1 }}
-        whileTap={{ y: 0, scale: 0.98 }}
+        whileTap={reducedMotion ? undefined : { y: 0, scale: 0.98 }}
         style={{
           backgroundImage:
             'linear-gradient(135deg, var(--ws-grad-1) 0%, var(--ws-grad-2) 33%, var(--ws-grad-3) 66%, var(--ws-grad-4) 100%)',
@@ -53,6 +54,7 @@ export function SidebarWorkspace() {
           'shadow-[0_4px_20px_-4px_var(--ws-glow-a),0_2px_8px_-2px_var(--ws-glow-b)]',
           'transition-shadow duration-300',
           'hover:shadow-[0_6px_28px_-4px_var(--ws-glow-a),0_4px_14px_-2px_var(--ws-glow-b)]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/80 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
           collapsed
             ? 'size-10 justify-center'
             : 'w-full gap-3 px-3 py-2.5',
