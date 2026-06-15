@@ -16,7 +16,7 @@ export function SidebarTrigger() {
         onClick={() => setMobileOpen(!isMobileOpen)}
         aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isMobileOpen}
-        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground md:hidden"
+        className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground md:hidden"
       >
         <Menu className="size-4" />
       </button>

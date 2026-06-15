@@ -14,6 +14,15 @@ export function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
 
+  // Escape closes the chat — the close button was the only exit before.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPromptActive(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [setPromptActive]);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -25,8 +34,8 @@ export function ChatInterface() {
       <div className="w-full h-full rounded-3xl bg-white/95 dark:bg-white/5 backdrop-blur-sm dark:backdrop-blur-xl border border-zinc-200 dark:border-white/10 shadow-2xl shadow-indigo-500/10 overflow-hidden flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-3.5 border-b border-zinc-200/80 dark:border-white/10 shrink-0">
-          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="shrink-0 w-9 h-9 rounded-lg bg-brand flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-brand-foreground" />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-tight">ด็อกซี่ (Doxy)</span>
@@ -59,8 +68,7 @@ export function ChatInterface() {
               <button
                 type="button"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold
-                  bg-indigo-600 hover:bg-indigo-700 text-white
-                  shadow-md shadow-indigo-500/20
+                  bg-primary hover:bg-primary/90 text-primary-foreground
                   transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -97,9 +105,9 @@ export function ChatInterface() {
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${
                           msg.role === 'user'
-                            ? 'bg-indigo-600 text-white rounded-br-md shadow-md shadow-indigo-500/20'
+                            ? 'bg-primary text-primary-foreground rounded-br-md'
                             : 'bg-zinc-100 dark:bg-white/5 text-foreground rounded-bl-md border border-zinc-200/60 dark:border-white/10'
                         }`}
                       >

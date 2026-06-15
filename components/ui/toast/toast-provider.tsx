@@ -67,7 +67,7 @@ export function ToastProvider() {
       data-toast-viewport
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
-      className="pointer-events-none fixed bottom-3 right-3 z-[100] w-[calc(100vw-1.5rem)] max-w-[400px] sm:bottom-6 sm:right-6"
+      className="pointer-events-none fixed top-3 left-1/2 -translate-x-1/2 z-100 w-[calc(100vw-1.5rem)] max-w-100 sm:top-6"
       style={{ height: ordered.length === 0 ? 0 : containerHeight }}
     >
       <div className="relative h-full w-full">

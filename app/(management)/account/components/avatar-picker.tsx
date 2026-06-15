@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -114,7 +114,7 @@ export function AvatarPicker({
           className="pointer-events-none absolute inset-y-3 right-3 z-10 w-6 rounded-r-xl bg-gradient-to-l from-background to-transparent sm:inset-y-4 sm:right-4"
         />
 
-        <motion.div ref={containerRef} className="overflow-hidden">
+        <motion.div ref={containerRef} className="overflow-x-clip py-2">
           <motion.div
             ref={trackRef}
             drag={isReady ? 'x' : false}
@@ -128,11 +128,11 @@ export function AvatarPicker({
             {/* Upload tile */}
             <div
               className={cn(
-                'group relative flex-shrink-0 overflow-hidden rounded-2xl border-4 transition-all',
+                'group relative flex-shrink-0 overflow-hidden rounded-2xl transition-all duration-200',
                 tileSize,
                 customSelected
-                  ? 'border-primary shadow-xl shadow-primary/20'
-                  : 'border-dashed border-muted-foreground/30 hover:border-muted-foreground/60',
+                  ? 'scale-[1.06] border-4 border-sky-500 ring-4 ring-sky-400/50 ring-offset-2 shadow-xl shadow-sky-500/30'
+                  : 'border-4 border-dashed border-muted-foreground/30 hover:border-muted-foreground/60',
               )}
             >
               {customSelected ? (
@@ -166,8 +166,8 @@ export function AvatarPicker({
                       ลบ
                     </Button>
                   </div>
-                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
-                    <Check className="size-3" />
+                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white shadow-md ring-2 ring-white/80">
+                    <Check className="size-3 stroke-3" />
                   </div>
                 </>
               ) : (
@@ -191,10 +191,10 @@ export function AvatarPicker({
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                   className={cn(
-                    'group relative flex-shrink-0 overflow-hidden rounded-2xl border-4',
+                    'group relative flex-shrink-0 overflow-hidden rounded-2xl border-4 transition-all duration-200',
                     tileSize,
                     isSelected
-                      ? 'border-primary shadow-xl shadow-primary/20'
+                      ? 'scale-[1.06] border-sky-500 ring-4 ring-sky-400/50 ring-offset-2 shadow-xl shadow-sky-500/30'
                       : 'border-transparent hover:border-muted-foreground/30',
                   )}
                 >
@@ -219,8 +219,8 @@ export function AvatarPicker({
                     </Button>
                   </div>
                   {isSelected ? (
-                    <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
-                      <Check className="size-3" />
+                    <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white shadow-md ring-2 ring-white/80">
+                      <Check className="size-3 stroke-3" />
                     </div>
                   ) : null}
                 </motion.div>
@@ -249,3 +249,4 @@ export function AvatarPicker({
     </div>
   );
 }
+

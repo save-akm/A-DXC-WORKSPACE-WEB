@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef<Promise<boolean> | null>(null);
+  const menuRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doRefresh = (): Promise<boolean> => {
     if (inFlightRef.current) return inFlightRef.current;
@@ -40,8 +41,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           menuAction(res.accessToken),
         ]);
         if (user) store.setUser(user);
-        useMenuStore.getState().setMenus(menus);
+        if (menus.length > 0) {
+          useMenuStore.getState().setMenus(menus);
+        } else {
+          // menuAction returned [] — backend session hasn't propagated yet
+          // (read-after-write lag). Don't overwrite cached menus; retry once
+          // after a short delay when the DB is guaranteed to be consistent.
+          if (menuRetryRef.current) clearTimeout(menuRetryRef.current);
+          menuRetryRef.current = setTimeout(async () => {
+            menuRetryRef.current = null;
+            const token = useAuthStore.getState().accessToken;
+            if (!token) return;
+            const retried = await menuAction(token);
+            if (retried.length > 0) useMenuStore.getState().setMenus(retried);
+          }, 700);
+        }
         store.setStatus('authenticated');
+
         return true;
       }
       emitLogout();
@@ -110,6 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('online', onWake);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cancel any pending menu retry on unmount.
+  useEffect(() => {
+    return () => {
+      if (menuRetryRef.current) clearTimeout(menuRetryRef.current);
+    };
   }, []);
 
   return <>{children}</>;

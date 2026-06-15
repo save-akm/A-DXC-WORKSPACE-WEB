@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Teams Card — Themed Preview</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; }
+
+/* ── TOKENS ── */
+.dark {
+  --bg:        oklch(0.17 0.05 260);
+  --card:      oklch(0.22 0.05 260);
+  --muted:     oklch(0.269 0 0);
+  --border:    oklch(1 0 0 / 10%);
+  --fg:        oklch(0.985 0 0);
+  --fg-muted:  oklch(0.708 0 0);
+  --fg-dim:    oklch(0.556 0 0);
+  --avatar-border: oklch(0.22 0.05 260);
+}
+.light {
+  --bg:        oklch(1 0 0);
+  --card:      oklch(1 0 0);
+  --muted:     oklch(0.97 0 0);
+  --border:    oklch(0.922 0 0);
+  --fg:        oklch(0.145 0 0);
+  --fg-muted:  oklch(0.556 0 0);
+  --fg-dim:    oklch(0.708 0 0);
+  --avatar-border: oklch(1 0 0);
+}
+
+.page {
+  padding: 24px;
+  background: var(--bg);
+  min-height: 100vh;
+  transition: background 0.3s;
+}
+
+/* theme toggle */
+.toggle-bar {
+  display: flex; gap: 8px; margin-bottom: 24px;
+}
+.toggle-btn {
+  padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border);
+  background: var(--muted); color: var(--fg-muted);
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: linear-gradient(135deg,#6366f1,#a855f7);
+  color: white; border-color: transparent;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+}
+
+/* Page header */
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 20px;
+}
+.page-title { font-size: 20px; font-weight: 800; color: var(--fg); }
+.page-sub { font-size: 12px; color: var(--fg-muted); margin-top: 3px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.search-box {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--muted); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 14px;
+  color: var(--fg-dim); font-size: 12px;
+}
+.btn-create {
+  background: linear-gradient(135deg,#6366f1,#a855f7);
+  color: white; padding: 8px 16px; border-radius: 10px;
+  font-size: 12px; font-weight: 600;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  white-space: nowrap;
+}
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 16px;
+}
+.stat-label { color: var(--fg-dim); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.stat-value { color: var(--fg); font-size: 22px; font-weight: 800; }
+
+/* Card grid */
+.grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+
+/* Team card */
+.team-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.team-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border-color: rgba(99,102,241,0.3);
+}
+
+/* Banner */
+.banner {
+  height: 72px; position: relative; flex-shrink: 0;
+}
+.banner-action {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,0.25); border-radius: 6px;
+  padding: 3px 8px; font-size: 11px; color: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px); cursor: pointer;
+}
+.logo {
+  position: absolute; bottom: -18px; left: 14px;
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 3px solid var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: white;
+}
+
+/* Body */
+.card-body { padding: 24px 14px 14px; display: flex; flex-direction: column; flex: 1; }
+
+/* Name + tags row */
+.name-row {
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+.team-name { color: var(--fg); font-size: 13px; font-weight: 700; }
+.tag {
+  padding: 1px 8px; border-radius: 20px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.03em;
+}
+
+/* Description — middle of card body */
+.desc {
+  color: var(--fg-muted); font-size: 11px; line-height: 1.55;
+  flex: 1; display: flex; align-items: center;
+  min-height: 36px;
+}
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+/* Footer */
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.avatars { display: flex; align-items: center; gap: 6px; }
+.avatar-stack { display: flex; }
+.av {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--avatar-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; color: white;
+}
+.av + .av { margin-left: -8px; }
+.av-more {
+  background: var(--muted); color: var(--fg-dim) !important;
+  font-size: 8px !important; font-weight: 600 !important;
+}
+.member-count { color: var(--fg-dim); font-size: 10px; }
+.project-badge {
+  display: flex; align-items: center; gap: 4px;
+  border-radius: 8px; padding: 3px 9px;
+  font-size: 10px; font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="page dark" id="page">
+
+  <!-- Theme toggle -->
+  <div class="toggle-bar">
+    <button class="toggle-btn active" onclick="setTheme('dark',this)">🌙 Dark</button>
+    <button class="toggle-btn" onclick="setTheme('light',this)">☀️ Light</button>
+    <button class="toggle-btn" onclick="setTheme('dawn',this)">🌅 Dawn</button>
+  </div>
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Teams</div>
+      <div class="page-sub">จัดการทีมและสมาชิกในระบบ</div>
+    </div>
+    <div class="header-actions">
+      <div class="search-box">🔍 ค้นหาทีม…</div>
+      <div class="btn-create">+ สร้างทีม</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">ทีมทั้งหมด</div>
+      <div class="stat-value">6</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">สมาชิกรวม</div>
+      <div class="stat-value">24</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Projects</div>
+      <div class="stat-value">18</div>
+    </div>
+  </div>
+
+  <!-- Team cards -->
+  <div class="grid">
+
+    <!-- Alpha Team -->
+    <div class="team-card">
+      <div class="banner" style="background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);">
+        <div class="banner-action">⋯</div>
+        <div class="logo" style="background:linear-gradient(135deg,#6366f1,#7c3aed);">A</div>
+      </div>
+      <div class="card-body">
+        <div class="name-row">
+          <span class="team-name">Alpha Team</span>
+          <span class="tag" style="background:rgba(99,102,241,0.15);color:#818cf8;">DEVELOP</span>
+          <span class="tag" style="background:rgba(20,184,166,0.15);color:#2dd4bf;">INFRA</span>
+        </div>
+        <div class="desc">ทีม Backend ดูแลระบบ API และ Infrastructure ของโปรเจค</div>
+        <div class="divider"></div>
+        <div class="card-footer">
+          <div class="avatars">
+            <div class="avatar-stack">
+              <div class="av" style="background:linear-gradient(135deg,#6366f1,#a855f7);">ช</div>
+              <div class="av" style="background:linear-gradient(135deg,#ec4899,#f97316);">ญ</div>
+              <div class="av" style="background:linear-gradient(135deg,#14b8a6,#06b6d4);">ก</div>
+              <div class="av av-more">+4</div>
+            </div>
+            <span class="member-count">7 คน</span>
+          </div>
+          <div class="project-badge" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);">
+            <span>📁</span><span style="color:#818cf8;">3 projects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beta Team -->
+    <div class="team-card">
+      <div class="banner" style="background:linear-gradient(135deg,#14b8a6,#06b6d4,#0ea5e9);">
+        <div class="banner-action">⋯</div>
+        <div class="logo" style="background:linear-gradient(135deg,#14b8a6,#06b6d4);">B</div>
+      </div>
+      <div class="card-body">
+        <div class="name-row">
+          <span class="team-name">Beta Team</span>
+          <span class="tag" style="background:rgba(14,165,233,0.15);color:#38bdf8;">DESIGN</span>
+          <span class="tag" style="background:rgba(99,102,241,0.15);color:#818cf8;">UI/UX</span>
+        </div>
+        <div class="desc">ทีม Frontend รับผิดชอบ UI/UX และ Component Library</div>
+        <div class="divider"></div>
+        <div class="card-footer">
+          <div class="avatars">
+            <div class="avatar-stack">
+              <div class="av" style="background:linear-gradient(135deg,#14b8a6,#06b6d4);">ก</div>
+              <div class="av" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">น</div>
+              <div class="av" style="background:linear-gradient(135deg,#6366f1,#a855f7);">ส</div>
+            </div>
+            <span class="member-count">5 คน</span>
+          </div>
+          <div class="project-badge" style="background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);">
+            <span>📁</span><span style="color:#2dd4bf;">5 projects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gamma Team -->
+    <div class="team-card">
+      <div class="banner" style="background:linear-gradient(135deg,#a855f7,#ec4899,#f97316);">
+        <div class="banner-action">⋯</div>
+        <div class="logo" style="background:linear-gradient(135deg,#a855f7,#ec4899);">G</div>
+      </div>
+      <div class="card-body">
+        <div class="name-row">
+          <span class="team-name">Gamma Team</span>
+          <span class="tag" style="background:rgba(168,85,247,0.15);color:#c084fc;">QA</span>
+        </div>
+        <div class="desc">ทีม QA Testing ดูแลคุณภาพซอฟต์แวร์และ Automation Test</div>
+        <div class="divider"></div>
+        <div class="card-footer">
+          <div class="avatars">
+            <div class="avatar-stack">
+              <div class="av" style="background:linear-gradient(135deg,#a855f7,#ec4899);">ส</div>
+              <div class="av" style="background:linear-gradient(135deg,#10b981,#14b8a6);">พ</div>
+            </div>
+            <span class="member-count">3 คน</span>
+          </div>
+          <div class="project-badge" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.25);">
+            <span>📁</span><span style="color:#c084fc;">2 projects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delta Team -->
+    <div class="team-card">
+      <div class="banner" style="background:linear-gradient(135deg,#f59e0b,#ef4444,#ec4899);">
+        <div class="banner-action">⋯</div>
+        <div class="logo" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">D</div>
+      </div>
+      <div class="card-body">
+        <div class="name-row">
+          <span class="team-name">Delta Team</span>
+          <span class="tag" style="background:rgba(245,158,11,0.15);color:#fbbf24;">DEVOPS</span>
+        </div>
+        <div class="desc">ทีม DevOps จัดการ CI/CD Pipeline และ Cloud Infrastructure</div>
+        <div class="divider"></div>
+        <div class="card-footer">
+          <div class="avatars">
+            <div class="avatar-stack">
+              <div class="av" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">ว</div>
+              <div class="av" style="background:linear-gradient(135deg,#10b981,#14b8a6);">ร</div>
+              <div class="av av-more">+2</div>
+            </div>
+            <span class="member-count">4 คน</span>
+          </div>
+          <div class="project-badge" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);">
+            <span>📁</span><span style="color:#fbbf24;">4 projects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Epsilon Team (no logo url - fallback) -->
+    <div class="team-card">
+      <div class="banner" style="background:linear-gradient(135deg,#10b981,#14b8a6,#06b6d4);">
+        <div class="banner-action">⋯</div>
+        <div class="logo" style="background:linear-gradient(135deg,#10b981,#14b8a6);">E</div>
+      </div>
+      <div class="card-body">
+        <div class="name-row">
+          <span class="team-name">Epsilon Team</span>
+          <span class="tag" style="background:rgba(16,185,129,0.15);color:#34d399;">DATA</span>
+          <span class="tag" style="background:rgba(14,165,233,0.15);color:#38bdf8;">AI</span>
+        </div>
+        <div class="desc">ทีม Data Science และ AI วิเคราะห์ข้อมูลและพัฒนา Model</div>
+        <div class="divider"></div>
+        <div class="card-footer">
+          <div class="avatars">
+            <div class="avatar-stack">
+              <div class="av" style="background:linear-gradient(135deg,#10b981,#14b8a6);">อ</div>
+              <div class="av" style="background:linear-gradient(135deg,#6366f1,#a855f7);">ม</div>
+            </div>
+            <span class="member-count">2 คน</span>
+          </div>
+          <div class="project-badge" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);">
+            <span>📁</span><span style="color:#34d399;">2 projects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add team card -->
+    <div class="team-card" style="border:2px dashed var(--border);cursor:pointer;background:transparent;justify-content:center;align-items:center;min-height:200px;">
+      <div style="text-align:center;padding:24px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:var(--muted);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:var(--fg-dim);">+</div>
+        <div style="color:var(--fg-dim);font-size:12px;font-weight:600;">สร้างทีมใหม่</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const themes = {
+  dark: {},
+  light: {},
+  dawn: {
+    '--bg':        'oklch(0.96 0.015 200)',
+    '--card':      'oklch(1 0 0)',
+    '--muted':     'oklch(0.93 0.015 200)',
+    '--border':    'oklch(0.88 0.02 200)',
+    '--fg':        'oklch(0.2 0.02 240)',
+    '--fg-muted':  'oklch(0.5 0.02 220)',
+    '--fg-dim':    'oklch(0.65 0.02 220)',
+    '--avatar-border': 'oklch(1 0 0)',
+  }
+};
+
+function setTheme(name, btn) {
+  const page = document.getElementById('page');
+  page.className = 'page ' + (name === 'dawn' ? 'light' : name);
+  if (name === 'dawn') {
+    const t = themes.dawn;
+    Object.entries(t).forEach(([k,v]) => page.style.setProperty(k, v));
+  } else {
+    Object.keys(themes.dawn).forEach(k => page.style.removeProperty(k));
+  }
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -13,6 +13,21 @@ export const ROLE_BADGE_CLASSES: Record<string, string> = {
   User:          'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
 };
 
+/** Maps API role codes (uppercase) to display names. */
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  SYSTEM:      'System',
+  SUPER_ADMIN: 'Super Admin',
+  ADMIN:       'Admin',
+  SUPERVISOR:  'Supervisor',
+  VIEWER:      'Viewer',
+  USER:        'User',
+};
+
+/** Converts an API role code ("SUPER_ADMIN") to a display name ("Super Admin"). */
+export function normalizeRoleName(role: string): string {
+  return ROLE_DISPLAY_NAMES[role.toUpperCase()] ?? role;
+}
+
 export function roleBadgeClass(roleName: string): string {
   return ROLE_BADGE_CLASSES[roleName] ?? 'bg-muted text-muted-foreground';
 }

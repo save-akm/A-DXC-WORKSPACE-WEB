@@ -27,6 +27,7 @@ export interface LoginResponse extends AuthTokens {
 export type RefreshResponse = AuthTokens;
 
 export type MenuNodeType = 'GROUP' | 'MENU';
+export type MenuPermission = 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE' | 'EXPORT';
 
 export interface MenuNode {
   id: string;
@@ -36,6 +37,7 @@ export interface MenuNode {
   path: string | null;
   icon: string | null;
   sortOrder: number;
+  permissions: MenuPermission[];
   children: MenuNode[];
 }
 

@@ -135,7 +135,7 @@ export function SidebarMenuItem({ node, depth = 0 }: SidebarMenuItemProps) {
     ) : null;
 
   const baseClass = cn(
-    'group/menu relative flex h-8 items-center gap-2.5 overflow-hidden rounded-sm pr-2 text-sm transition-colors',
+    'group/menu relative flex h-8 items-center cursor-pointer gap-2.5 overflow-hidden rounded-sm pr-2 text-sm transition-colors',
     isDirectlyActive
       ? 'bg-gradient-to-r from-[var(--sidebar-menuactive-bg-from)] via-[var(--sidebar-menuactive-bg-to)] to-transparent text-foreground font-medium'
       : hasActiveChild
@@ -163,7 +163,9 @@ export function SidebarMenuItem({ node, depth = 0 }: SidebarMenuItemProps) {
         <ChevronRight
           className={cn(
             'size-3.5 transition-colors',
-            isDirectlyActive ? 'text-sky-400/80' : 'text-muted-foreground/60',
+            isDirectlyActive
+              ? 'text-(--sidebar-menuactive-accent)'
+              : 'text-muted-foreground/60',
           )}
         />
       </motion.span>
@@ -172,12 +174,12 @@ export function SidebarMenuItem({ node, depth = 0 }: SidebarMenuItemProps) {
   const activeBar = isDirectlyActive ? (
     <motion.span
       layoutId="sidebar-menu-active"
-      className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--sidebar-menuactive-accent)] shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+      className="absolute left-0 top-1/2 h-5 w-0.75 -translate-y-1/2 rounded-r-full bg-(--sidebar-menuactive-accent) shadow-[0_0_8px_var(--sidebar-menuactive-accent)]"
       transition={{ type: 'spring', stiffness: 400, damping: 34 }}
     >
       <motion.span
         aria-hidden
-        className="absolute inset-0 rounded-r-full bg-[var(--sidebar-menuactive-accent)]"
+        className="absolute inset-0 rounded-r-full bg-(--sidebar-menuactive-accent)"
         animate={{ opacity: [0.4, 1, 0.4] }}
         transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
       />

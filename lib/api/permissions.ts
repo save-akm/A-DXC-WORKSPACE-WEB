@@ -14,7 +14,8 @@ import {
 
 export async function fetchRolePermissions(): Promise<RolePermissionMatrix> {
   try {
-    return await apiFetch<RolePermissionMatrix>('/permissions/roles');
+    const res = await apiFetch<{ data: RolePermissionMatrix }>('/permissions/roles');
+    return res.data;
   } catch {
     return MOCK_ROLE_MATRIX;
   }
@@ -45,7 +46,8 @@ export async function fetchUserPermissions(
       pageSize: '20',
       ...(search ? { search } : {}),
     });
-    return await apiFetch<UserPermissionPage>(`/permissions/users?${params}`);
+    const res = await apiFetch<{ data: UserPermissionPage }>(`/permissions/users?${params}`);
+    return res.data;
   } catch {
     const data = getMockUserPermissions(menuId);
     if (search) {
@@ -74,7 +76,8 @@ export async function patchUserPermissions(
 
 export async function fetchMenuList(): Promise<MenuItem[]> {
   try {
-    return await apiFetch<MenuItem[]>('/menus/my');
+    const res = await apiFetch<{ data: MenuItem[] }>('/menus/my');
+    return res.data;
   } catch {
     return MOCK_MENUS;
   }

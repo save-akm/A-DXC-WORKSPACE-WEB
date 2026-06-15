@@ -4,7 +4,18 @@
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies.next\\)\")",
       "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/list\")",
       "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/timeline\")",
-      "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/calendar\")"
+      "Bash(mkdir -p \"d:/Akaraphon/NextJS/work/A-DXC-WORKSPACE-CENTER/A-DXC-WORKSPACE-CENTER-WEB/app/\\(management\\)/projects/[slug]/calendar\")",
+      "Read(//c/Users/ASUS/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/**)",
+      "Bash(C:/Users/ASUS/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/scripts/start-server.sh --project-dir \"c:/MyVenus/NextJs/A-DXC-WORKSPACE-WEB\")",
+      "Bash(mkdir -p \"c:/MyVenus/NextJs/A-DXC-WORKSPACE-WEB/docs/superpowers/specs\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Read(//c/Users/ASUS/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/**)",
+      "Bash(git -C \"c:/MyVenus/NextJs/A-DXC-WORKSPACE-WEB\" log --oneline -3)",
+      "Read(//c/Users/ASUS/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/requesting-code-review/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\MyVenus\\NextJs\\A-DXC-WORKSPACE-WEB\\docs\\superpowers"
     ]
   }
 }

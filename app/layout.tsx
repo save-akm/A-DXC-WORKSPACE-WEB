@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
-import { fontLocalTh} from "./fonts";
+import { fontLocalTh, fontLocalEn } from "./fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemePresetProvider } from "@/components/theme-preset-provider";
 import { AuthProvider } from "@/components/auth-provider";
@@ -20,24 +21,29 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontLocalTh.className} antialiased`}
+      className={`${fontLocalEn.variable} ${fontLocalTh.variable} antialiased`}
       suppressHydrationWarning
       data-theme="light"
     >
       <body className="min-h-screen">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ThemePresetProvider>
-            <AuthProvider>
-              <SocketProvider>{children}</SocketProvider>
-            </AuthProvider>
-            <ToastProvider />
-          </ThemePresetProvider>
-        </ThemeProvider>
+        {/* reducedMotion="user" makes every Framer `motion` component respect
+            prefers-reduced-motion automatically; per-component guards cover the
+            GSAP / imperative / 3D motion Framer can't see. */}
+        <MotionConfig reducedMotion="user">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ThemePresetProvider>
+              <AuthProvider>
+                <SocketProvider>{children}</SocketProvider>
+              </AuthProvider>
+              <ToastProvider />
+            </ThemePresetProvider>
+          </ThemeProvider>
+        </MotionConfig>
       </body>
     </html>
   );

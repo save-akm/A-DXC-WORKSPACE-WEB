@@ -30,8 +30,6 @@ interface ProfileMenuProps {
   /** Element that wraps both the trigger and this menu — clicks inside it never close the menu. */
   containerRef: React.RefObject<HTMLElement | null>;
   user: ProfileMenuUser;
-  onAccount?: () => void;
-  onSecurity?: () => void;
   onLogout?: () => void;
 }
 
@@ -40,8 +38,6 @@ export function ProfileMenu({
   onClose,
   containerRef,
   user,
-  onAccount,
-  onSecurity,
   onLogout,
 }: ProfileMenuProps) {
   useEffect(() => {
@@ -100,7 +96,7 @@ export function ProfileMenu({
           className="absolute bottom-0 left-full z-50 ml-2 w-64 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl"
         >
           {/* Header */}
-          <div className="relative flex items-center gap-2.5 overflow-hidden border-b border-border/60 bg-gradient-to-r from-violet-500/15 via-fuchsia-500/15 to-amber-500/15 p-3">
+          <div className="relative flex items-center gap-2.5 overflow-hidden border-b border-border/60 bg-linear-to-r from-violet-500/15 via-fuchsia-500/15 to-amber-500/15 p-3">
             <span
               aria-hidden
               className="pointer-events-none absolute -right-8 -top-6 size-24 rounded-full bg-fuchsia-500/15 blur-2xl"

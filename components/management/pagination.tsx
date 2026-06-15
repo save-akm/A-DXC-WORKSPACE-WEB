@@ -36,7 +36,7 @@ export function Pagination({
   const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-3 sm:px-5">
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
       <p className="text-xs text-muted-foreground">
         Showing{" "}
         <span className="font-medium text-foreground">{from}–{to}</span>{" "}

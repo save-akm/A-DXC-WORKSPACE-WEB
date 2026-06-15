@@ -76,7 +76,7 @@ export function ThemePicker() {
             transition={{ duration: 0.16, ease: 'easeOut' }}
             className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-2xl"
           >
-            <div className="px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
+            <div className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {currentTheme === 'dark' ? 'Dark themes' : 'Light themes'}
             </div>
             <div className="flex flex-col gap-0.5">
@@ -111,7 +111,7 @@ export function ThemePicker() {
                         {preset.id}
                       </span>
                     </div>
-                    {isActive ? <Check className="size-4 text-sky-400" /> : null}
+                    {isActive ? <Check className="size-4 text-brand" /> : null}
                   </button>
                 );
               })}

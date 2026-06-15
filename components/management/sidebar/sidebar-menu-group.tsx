@@ -25,12 +25,12 @@ export function SidebarMenuGroup({ group }: SidebarMenuGroupProps) {
             type="button"
             onClick={() => toggleSection(group.id)}
             aria-expanded={isExpanded}
-            className="group/sec flex flex-1 cursor-pointer items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--sidebar-mainmenu-text)] transition-colors hover:text-[var(--sidebar-menuhover-text)] dark:text-sky-200/90 dark:hover:text-sky-100"
+            className="group/sec flex flex-1 cursor-pointer items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-(--sidebar-mainmenu-text) transition-colors hover:text-(--sidebar-menuhover-text)"
           >
             <motion.span
               animate={{ rotate: isExpanded ? 90 : 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="inline-flex text-[var(--sidebar-mainmenu-icon)] dark:text-sky-300"
+              className="inline-flex text-(--sidebar-mainmenu-icon)"
             >
               <ChevronRight className="size-4" />
             </motion.span>

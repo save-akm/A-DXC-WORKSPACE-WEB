@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
@@ -19,6 +19,9 @@ export function ActionMenu({ actions }: { actions: ActionItem[] }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleToggle = () => {
     if (!open && containerRef.current) {
@@ -34,7 +37,7 @@ export function ActionMenu({ actions }: { actions: ActionItem[] }) {
         <MoreHorizontal size={14} />
       </Button>
 
-      {createPortal(
+      {mounted && createPortal(
         <AnimatePresence>
           {open && (
             <>

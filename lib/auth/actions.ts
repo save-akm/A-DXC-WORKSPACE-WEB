@@ -29,13 +29,14 @@ export async function loginAction(
 ): Promise<LoginActionState> {
   const identifier = (formData.get('identifier') ?? '').toString().trim();
   const password = (formData.get('password') ?? '').toString();
+  const rememberMe = formData.get('remember') === 'on';
 
   if (!identifier || !password) {
     return { status: 'error', error: 'กรุณากรอกอีเมลและรหัสผ่าน' };
   }
 
   try {
-    const res = await loginRequest(identifier, password);
+    const res = await loginRequest(identifier, password, rememberMe);
     const [user, menus] = await Promise.all([
       meRequest(res.accessToken),
       menuRequest(res.accessToken).catch((e) => {

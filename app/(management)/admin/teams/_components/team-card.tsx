@@ -74,7 +74,7 @@ export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-200 hover:border-indigo-500/30 hover:shadow-lg">
       {/* Banner */}
-      <div className="relative h-24 shrink-0" style={bannerStyle}>
+      <div className="relative h-16 shrink-0" style={bannerStyle}>
         <div className="absolute right-2 top-2">
           <ActionMenu
             actions={[
@@ -83,9 +83,9 @@ export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
             ]}
           />
         </div>
-        {/* Logo — large, overlapping banner bottom */}
+        {/* Logo — overlapping banner bottom */}
         <div
-          className="absolute -bottom-7 left-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border-4 border-card shadow-xl shadow-black/20"
+          className="absolute -bottom-10 left-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-4 border-card shadow-xl shadow-black/20"
           style={{ background: BANNER_GRADIENTS[accentIdx] }}
         >
           {team.logoUrl && !logoError ? (
@@ -96,13 +96,13 @@ export function TeamCard({ team, index, onEdit, onDelete }: TeamCardProps) {
               onError={() => setLogoError(true)}
             />
           ) : (
-            <span className="text-2xl font-extrabold text-white">{logoInitial}</span>
+            <span className="text-3xl font-extrabold text-white">{logoInitial}</span>
           )}
         </div>
       </div>
 
       {/* Card body */}
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-9">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-13">
         <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
           <span className="text-[13px] font-bold text-foreground">{team.name}</span>
           {team.tags.map((tag) => (

@@ -7,99 +7,53 @@ export interface ThemePreset {
   mode: 'light' | 'dark';
 }
 
+/**
+ * Curated theme set. We deliberately keep this short: one neutral and one
+ * branded option per mode. A long menu of competing decorative themes reads as
+ * indecision, not richness — each theme here earns its place.
+ *
+ *   Light · Default  — neutral, the everyday surface.
+ *   Light · Aurora   — the violet/fuchsia brand identity in light.
+ *   Dark  · Midnight — navy, the default dark surface.
+ *   Dark  · Cyberpunk— the violet/fuchsia brand identity in dark.
+ */
 export const themePresets: ThemePreset[] = [
   {
     id: 'default',
     name: 'Default',
     emoji: '⚪',
-    preview: 'from-white to-gray-50',
-    mode: 'light',
-  },
-  {
-    id: 'dawn',
-    name: 'Dawn',
-    emoji: '🌤️',
-    preview: 'from-sky-300 via-sky-200 to-slate-100',
-    mode: 'light',
-  },
-  {
-    id: 'cloud',
-    name: 'Cloud',
-    emoji: '☁️',
-    preview: 'from-slate-200 via-slate-100 to-zinc-100',
-    mode: 'light',
-  },
-  {
-    id: 'blossom',
-    name: 'Blossom',
-    emoji: '🌸',
-    preview: 'from-fuchsia-200 via-pink-200 to-rose-100',
-    mode: 'light',
-  },
-  {
-    id: 'matcha',
-    name: 'Matcha',
-    emoji: '🍵',
-    preview: 'from-emerald-200 via-lime-200 to-emerald-100',
-    mode: 'light',
-  },
-  {
-    id: 'lagoon',
-    name: 'Lagoon',
-    emoji: '🌊',
-    preview: 'from-cyan-200 via-sky-200 to-blue-100',
-    mode: 'light',
-  },
-  {
-    id: 'peach',
-    name: 'Peach',
-    emoji: '🍑',
-    preview: 'from-orange-200 via-amber-200 to-rose-100',
+    preview: 'from-white to-gray-100',
     mode: 'light',
   },
   {
     id: 'aurora',
     name: 'Aurora',
-    emoji: '💎',
-    preview: 'from-cyan-200 via-violet-200 to-fuchsia-100',
+    emoji: '🔮',
+    preview: 'from-violet-400 via-fuchsia-400 to-violet-300',
     mode: 'light',
   },
   {
     id: 'navy',
     name: 'Midnight',
     emoji: '🌌',
-    preview: 'from-indigo-500 via-violet-500 to-fuchsia-500',
+    preview: 'from-indigo-600 via-violet-600 to-slate-800',
     mode: 'dark',
   },
   {
     id: 'cyberpunk',
     name: 'Cyberpunk',
     emoji: '🌃',
-    preview: 'from-fuchsia-500 via-purple-500 to-cyan-400',
-    mode: 'dark',
-  },
-  {
-    id: 'sunset',
-    name: 'Sunset',
-    emoji: '🌅',
-    preview: 'from-rose-500 via-orange-400 to-amber-300',
-    mode: 'dark',
-  },
-  {
-    id: 'forest',
-    name: 'Forest',
-    emoji: '🌲',
-    preview: 'from-emerald-500 via-teal-500 to-lime-400',
-    mode: 'dark',
-  },
-  {
-    id: 'ocean',
-    name: 'Ocean',
-    emoji: '🌊',
-    preview: 'from-cyan-400 via-sky-500 to-blue-600',
+    preview: 'from-fuchsia-500 via-purple-500 to-violet-500',
     mode: 'dark',
   },
 ];
 
 export const DEFAULT_LIGHT_PRESET_ID = 'default';
 export const DEFAULT_DARK_PRESET_ID = 'navy';
+
+/** Guard against stale/removed preset ids persisted in older clients. */
+export function resolvePresetId(id: string | undefined, mode: 'light' | 'dark'): string {
+  const found = themePresets.find((p) => p.id === id && p.mode === mode);
+  if (found) return found.id;
+  return mode === 'dark' ? DEFAULT_DARK_PRESET_ID : DEFAULT_LIGHT_PRESET_ID;
+}

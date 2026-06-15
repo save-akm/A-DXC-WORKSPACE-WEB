@@ -140,7 +140,8 @@ function CyberCore() {
 
 export default function ITNextGenScene() {
   return (
-    <div className="h-[330px] 2xl:h-[500px] w-full cursor-grab active:cursor-grabbing relative overflow-visible">
+    <div className="h-full w-full flex items-center justify-center px-4 lg:px-8 pb-16 lg:pb-24">
+    <div className="h-65 lg:h-72.5 xl:h-100 2xl:h-125 w-full cursor-grab active:cursor-grabbing relative overflow-visible">
       <Canvas gl={{ powerPreference: 'high-performance', antialias: true }}>
         <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
         <ambientLight intensity={0.5} />
@@ -153,6 +154,7 @@ export default function ITNextGenScene() {
           <Environment preset="city" />
         </Suspense>
       </Canvas>
+    </div>
     </div>
   );
 }

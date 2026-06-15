@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import {
   CalendarDays,
   Users,
-  Camera,
   ArrowUpRight,
   PartyPopper,
   Trees,
@@ -31,7 +30,7 @@ const ACTIVITIES: Activity[] = [
     date: '15 ม.ค. 2026',
     attendees: 320,
     category: 'Celebration',
-    color: 'from-rose-500 via-pink-500 to-purple-600',
+    color: 'from-violet-600 via-purple-600 to-fuchsia-600',
     span: 'lg:col-span-2 lg:row-span-2',
     icon: PartyPopper,
   },
@@ -40,7 +39,7 @@ const ACTIVITIES: Activity[] = [
     date: '03 ก.พ. 2026',
     attendees: 85,
     category: 'Training',
-    color: 'from-indigo-500 via-blue-500 to-cyan-500',
+    color: 'from-indigo-600 via-violet-600 to-purple-600',
     span: '',
     icon: GraduationCap,
   },
@@ -49,7 +48,7 @@ const ACTIVITIES: Activity[] = [
     date: '12 มี.ค. 2026',
     attendees: 180,
     category: 'Community',
-    color: 'from-emerald-500 via-green-500 to-teal-600',
+    color: 'from-purple-600 via-violet-600 to-indigo-600',
     span: '',
     icon: Trees,
   },
@@ -58,7 +57,7 @@ const ACTIVITIES: Activity[] = [
     date: '05 เม.ย. 2026',
     attendees: 142,
     category: 'Knowledge',
-    color: 'from-violet-500 via-fuchsia-500 to-pink-500',
+    color: 'from-fuchsia-600 via-purple-600 to-violet-600',
     span: 'lg:col-span-2',
     icon: Brain,
   },
@@ -67,7 +66,7 @@ const ACTIVITIES: Activity[] = [
     date: '20 เม.ย. 2026',
     attendees: 280,
     category: 'Wellness',
-    color: 'from-amber-500 via-orange-500 to-rose-500',
+    color: 'from-violet-700 via-fuchsia-600 to-purple-600',
     span: '',
     icon: Trophy,
   },
@@ -84,33 +83,22 @@ export function ActivitySection() {
 
       {/* Decorative orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full bg-pink-500/15 dark:bg-pink-500/10 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[28rem] h-[28rem] rounded-full bg-rose-500/15 dark:bg-rose-500/10 blur-3xl" />
+        <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full bg-brand/12 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-[28rem] h-[28rem] rounded-full bg-brand/10 blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Heading */}
         <div className="text-center mb-10 lg:mb-12 2xl:mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: '-80px' }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-600 dark:text-pink-400 text-xs 2xl:text-sm font-semibold tracking-wide uppercase mb-4"
-          >
-            <Camera size={14} />
-            Moments &amp; Memories
-          </motion.div>
-
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, margin: '-80px' }}
             transition={{ duration: 0.6 }}
-            className="text-4xl md:text-5xl lg:text-5xl 2xl:text-7xl font-extrabold mb-3 lg:mb-4 2xl:mb-6 tracking-tight"
+            className="type-section-heading mb-3 lg:mb-4 2xl:mb-6"
           >
             A-DXC{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 dark:from-rose-400 dark:via-pink-400 dark:to-purple-400">
+            <span className="text-brand">
               Activity
             </span>
           </motion.h2>
@@ -120,7 +108,7 @@ export function ActivitySection() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: false, margin: '-80px' }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-base lg:text-base 2xl:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto font-light leading-relaxed"
+            className="text-base 2xl:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
             ภาพบรรยากาศและความทรงจำของกิจกรรมต่าง ๆ ที่หล่อหลอมเราให้เป็นทีมเดียวกัน
           </motion.p>
@@ -142,7 +130,7 @@ export function ActivitySection() {
               >
                 <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/10 shadow-xl shadow-black/10 dark:shadow-black/40">
                   {/* Gradient backdrop */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${act.color}`} />
+                  <div className={`absolute inset-0 bg-linear-to-br ${act.color}`} />
 
                   {/* Soft highlight */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.30),transparent_60%)]" />
@@ -158,7 +146,7 @@ export function ActivitySection() {
                   />
 
                   {/* Vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/15 to-transparent" />
 
                   {/* Floating large icon */}
                   <Icon className="absolute top-6 right-6 w-10 h-10 lg:w-12 lg:h-12 text-white/40 group-hover:text-white/80 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" />
@@ -171,7 +159,7 @@ export function ActivitySection() {
 
                   {/* Bottom info */}
                   <div className="absolute inset-x-0 bottom-0 p-5 lg:p-6 text-white">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70 mb-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-white/80 mb-2">
                       {act.category}
                     </div>
                     <h3 className="font-extrabold text-lg lg:text-xl 2xl:text-3xl leading-tight mb-3 drop-shadow-md">

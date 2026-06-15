@@ -50,7 +50,7 @@ export function SidebarProfile() {
       </AnimatePresence>
 
       <div ref={containerRef} className="relative">
-        <div className="flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-foreground/[0.06]">
+        <div className="flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-foreground/6">
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
@@ -109,7 +109,7 @@ export function SidebarProfile() {
           'text-muted-foreground',
 
           // hover colors
-          'hover:bg-gradient-to-br',
+          'hover:bg-linear-to-br',
           'hover:from-violet-500/15',
           'hover:via-fuchsia-500/10',
           'hover:to-pink-500/15',
@@ -134,8 +134,6 @@ export function SidebarProfile() {
           onClose={() => setMenuOpen(false)}
           containerRef={containerRef}
           user={{ name, email, initial, color, avatarUrl }}
-          onAccount={() => console.log('account')}
-          onSecurity={() => console.log('security')}
           onLogout={logout}
         />
       </div>

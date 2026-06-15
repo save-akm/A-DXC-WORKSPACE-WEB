@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useMenuStore } from '@/lib/stores/menu-store';
 import { useMenuBadgesStore } from '@/lib/stores/menu-badges-store';
 import { disconnectSocket, emitLogout } from '@/lib/socket/socket-client';
+import { clearStoredRefreshToken } from '@/lib/auth/token-storage';
 
 /**
  * Full logout sequence:
@@ -31,6 +32,7 @@ export function useLogout() {
     useAuthStore.getState().clear();
     useMenuStore.getState().clear();
     useMenuBadgesStore.getState().clear();
+    clearStoredRefreshToken();
 
     router.replace('/login');
   }, [router]);

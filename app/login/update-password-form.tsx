@@ -30,18 +30,18 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
   return (
     <>
       <div className="flex flex-col items-center gap-3 mb-6">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+        <div className="w-14 h-14 rounded-2xl bg-brand flex items-center justify-center shadow-lg shadow-brand/30">
           <KeyRound className="w-7 h-7 text-white" />
         </div>
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">ตั้งรหัสผ่านใหม่</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">ตั้งรหัสผ่านใหม่</h1>
           <p className="text-xs text-muted-foreground mt-1">
             บัญชีของคุณต้องเปลี่ยนรหัสผ่านก่อนเข้าใช้งาน
           </p>
         </div>
       </div>
 
-      <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-4 text-xs bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+      <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-4 text-xs bg-warning/10 border border-warning/20 text-warning">
         <ShieldAlert className="w-3.5 h-3.5 mt-0.5 shrink-0" />
         <span>เพื่อความปลอดภัย กรุณาตั้งรหัสผ่านใหม่ที่คาดเดาได้ยาก (อย่างน้อย 8 ตัวอักษร)</span>
       </div>
@@ -69,7 +69,7 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
                 bg-zinc-100/70 dark:bg-white/5
                 border border-zinc-200 dark:border-white/10
                 text-foreground placeholder:text-muted-foreground/50
-                outline-none focus:border-amber-400/60 focus:bg-white dark:focus:bg-white/[0.07]
+                outline-none focus:border-ring focus:ring-2 focus:ring-ring/25 focus:bg-white dark:focus:bg-white/8
                 transition-colors disabled:opacity-60"
             />
             <button
@@ -104,7 +104,7 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
                 bg-zinc-100/70 dark:bg-white/5
                 border border-zinc-200 dark:border-white/10
                 text-foreground placeholder:text-muted-foreground/50
-                outline-none focus:border-amber-400/60 focus:bg-white dark:focus:bg-white/[0.07]
+                outline-none focus:border-ring focus:ring-2 focus:ring-ring/25 focus:bg-white dark:focus:bg-white/8
                 transition-colors disabled:opacity-60"
             />
             <button
@@ -122,7 +122,7 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
           <div
             role="alert"
             className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs
-              bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-300"
+              bg-destructive/10 border border-destructive/20 text-destructive"
           >
             <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>{state.error}</span>
@@ -135,8 +135,8 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
           whileHover={pending ? undefined : { scale: 1.02 }}
           whileTap={pending ? undefined : { scale: 0.97 }}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold
-            bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white
-            shadow-lg shadow-orange-500/30
+            bg-linear-to-br from-violet-600 to-fuchsia-700 hover:from-violet-700 hover:to-fuchsia-800 text-white
+            shadow-lg shadow-brand/30
             transition-colors cursor-pointer
             disabled:opacity-70 disabled:cursor-not-allowed"
         >

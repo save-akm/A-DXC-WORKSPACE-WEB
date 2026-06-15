@@ -4,11 +4,15 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationFrame } from 'framer-motion';
 import { warpState } from '@/lib/warp-state';
 import { useChatUIStore, useLoginUIStore } from '@/lib/store';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 export function VisualDataFlow() {
   const [coords, setCoords] = useState<{ start: { x: number, y: number }, end: { x: number, y: number } } | null>(null);
   const isLoginActive = useLoginUIStore((s) => s.isLoginActive);
   const isPromptActive = useChatUIStore((s) => s.isPromptActive);
+  // The streaming-data lines are perpetual decorative motion; remove them for
+  // reduced-motion users rather than freezing a half-drawn dash.
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   const updateCoords = () => {
     const startEl = document.getElementById('cyber-core-zoom');
@@ -73,7 +77,7 @@ export function VisualDataFlow() {
     }
   });
 
-  if (!coords) return null;
+  if (reducedMotion || !coords) return null;
 
   const { start, end } = coords;
   
@@ -97,9 +101,9 @@ export function VisualDataFlow() {
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
           <linearGradient id="energy-grad" x1={start.x} y1={start.y} x2={end.x} y2={end.y} gradientUnits="userSpaceOnUse">
-            <stop stopColor="#6366f1" />
-            <stop offset="0.5" stopColor="#a855f7" />
-            <stop offset="1" stopColor="#ec4899" />
+            <stop stopColor="#7c3aed" />
+            <stop offset="0.5" stopColor="#9333ea" />
+            <stop offset="1" stopColor="#a855f7" />
           </linearGradient>
         </defs>
 
@@ -159,8 +163,8 @@ export function VisualDataFlow() {
         />
         <defs>
           <radialGradient id="impact-glow">
-            <stop offset="0%" stopColor="#ec4899" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
+            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
           </radialGradient>
         </defs>
       </svg>

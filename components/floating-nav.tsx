@@ -5,6 +5,7 @@ import { LayoutGrid, Home, ChevronRight, ChevronLeft, Megaphone, Users, Camera }
 import { useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 /**
  * Configuration for the sections.
@@ -18,7 +19,6 @@ type SectionDef = {
   id: string;
   label: string;
   icon: React.ReactNode;
-  color: string;
   domId?: string;
 };
 
@@ -27,34 +27,29 @@ const SECTIONS: SectionDef[] = [
     id: 'hero',
     label: 'Portal Hub',
     icon: <Home size={16} />,
-    color: 'from-blue-600 to-indigo-600',
   },
   {
     id: 'app-hub',
     label: 'App Hub',
     icon: <LayoutGrid size={16} />,
-    color: 'from-purple-600 to-pink-600',
     domId: 'app-hub-section',
   },
   {
     id: 'announcements',
     label: 'Announcements',
     icon: <Megaphone size={16} />,
-    color: 'from-amber-600 to-rose-600',
     domId: 'announcements-section',
   },
   {
     id: 'meet-it-team',
     label: 'IT Team',
     icon: <Users size={16} />,
-    color: 'from-indigo-600 to-violet-600',
     domId: 'meet-it-team-section',
   },
   {
     id: 'activity',
     label: 'Activity',
     icon: <Camera size={16} />,
-    color: 'from-rose-500 to-pink-600',
     domId: 'activity-section',
   },
 ];
@@ -64,9 +59,16 @@ const REVEAL_THRESHOLD = 0.85;
 export function FloatingNav() {
   const [activeSection, setActiveSection] = useState('hero');
   const [warpDone, setWarpDone] = useState(false);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  // Under reduced motion there is no warp, so the nav is "ready" immediately;
+  // derive it rather than writing state from inside an effect.
+  const warpReady = warpDone || reducedMotion;
 
   // ── Track warp progress to gate hero <-> landing visibility ──
   useEffect(() => {
+    // No warp under reduced motion (the hero is in normal flow).
+    if (reducedMotion) return;
+
     const onWarpUpdate = (p: number) => {
       setWarpDone(p >= REVEAL_THRESHOLD);
     };
@@ -96,11 +98,11 @@ export function FloatingNav() {
       if (observer) observer.kill();
       if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, [reducedMotion]);
 
   // ── Track which Landing section is currently in view ──
   useEffect(() => {
-    if (!warpDone) return;
+    if (!warpReady) return;
 
     const targets = SECTIONS.filter((s) => s.domId)
       .map((s) => ({ id: s.id, el: document.getElementById(s.domId!) }))
@@ -127,12 +129,12 @@ export function FloatingNav() {
     setActiveSection((cur) => (cur === 'hero' ? targets[0].id : cur));
 
     return () => io.disconnect();
-  }, [warpDone]);
+  }, [warpReady]);
 
   // When warp progress drops back below threshold, return to hero.
   useEffect(() => {
-    if (!warpDone) setActiveSection('hero');
-  }, [warpDone]);
+    if (!warpReady) setActiveSection('hero');
+  }, [warpReady]);
 
   const currentIndex = SECTIONS.findIndex((s) => s.id === activeSection);
   const portalSec = SECTIONS[0];
@@ -141,6 +143,12 @@ export function FloatingNav() {
 
   const scrollToSection = (id: string) => {
     if (id === 'hero') {
+      // Native jump under reduced motion (the GSAP ScrollTo plugin is only
+      // registered along the warp path, which is skipped there).
+      if (reducedMotion) {
+        window.scrollTo({ top: 0 });
+        return;
+      }
       gsap.to(window, {
         scrollTo: 0,
         duration: 1.2,
@@ -154,6 +162,11 @@ export function FloatingNav() {
     const target = document.getElementById(sec.domId);
     if (!target) return;
 
+    if (reducedMotion) {
+      target.scrollIntoView({ block: 'start' });
+      return;
+    }
+
     gsap.to(window, {
       scrollTo: { y: target, offsetY: 0, autoKill: false },
       duration: 1.2,
@@ -161,7 +174,7 @@ export function FloatingNav() {
     });
   };
 
-  const isVisible = warpDone && activeSection !== 'hero';
+  const isVisible = warpReady && activeSection !== 'hero';
 
   if (!isVisible) return null;
 
@@ -233,15 +246,15 @@ function NavButton({
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={`
-        relative flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer overflow-hidden group
+        relative flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all cursor-pointer overflow-hidden group
         ${
           variant === 'primary'
-            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+            ? 'bg-brand text-brand-foreground shadow-lg shadow-brand/25'
             : 'bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 hover:bg-black/10 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white border border-black/5 dark:border-white/5'
         }
       `}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 
       {isPrev && icon}
       {variant === 'primary' && icon}

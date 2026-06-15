@@ -11,7 +11,6 @@ import { useChatUIStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Info, Rocket, Zap } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { HeroTelemetry } from '@/components/hero-telemetry';
 import { Landing } from '@/components/landing';
 import { WarpOverlay } from '@/components/warp-overlay';
@@ -19,9 +18,11 @@ import { FloatingNav } from '@/components/floating-nav';
 import { AiPromptBox } from '@/components/ai-prompt-box';
 import { ChatInterface } from '@/components/chat-interface';
 import { VisualDataFlow } from '@/components/visual-data-flow';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 
-const Scene = dynamic(() => import('@/components/it-robot-scene'), {
+const Scene = dynamic(() => import('@/components/it-nextgen-scene'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
@@ -36,32 +37,39 @@ export default function Home() {
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const isPromptActive = useChatUIStore((s) => s.isPromptActive);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
     document.body.style.overflow = isPromptActive ? 'hidden' : '';
+    const dur = reducedMotion ? 0 : 0.5;
 
     if (isPromptActive) {
       gsap.to('#hero-content-left', {
         x: -800, opacity: 0, scale: 0.85,
-        duration: 0.5, ease: 'power2.inOut', overwrite: 'auto',
+        duration: dur, ease: 'power2.inOut', overwrite: 'auto',
       });
       gsap.to('#hero-content-right', {
         x: 800, opacity: 0, scale: 0.85,
-        duration: 0.5, ease: 'power2.inOut', overwrite: 'auto',
+        duration: dur, ease: 'power2.inOut', overwrite: 'auto',
       });
     } else {
       gsap.to(['#hero-content-left', '#hero-content-right'], {
         x: 0, opacity: 1, scale: 1,
-        duration: 0.5, ease: 'power2.out', overwrite: 'auto',
+        duration: dur, ease: 'power2.out', overwrite: 'auto',
       });
     }
 
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isPromptActive]);
+  }, [isPromptActive, reducedMotion]);
 
   useEffect(() => {
+    // Reduced motion: skip the entire warp-dive (pin + scrub + snap) and the
+    // heading tween. The hero renders in normal document flow (see the section
+    // className below) so Landing is reached by ordinary scrolling instead.
+    if (reducedMotion) return;
+
     // Register GSAP plugins
     gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -103,15 +111,15 @@ export default function Home() {
     warpTl.set(['#cyber-core-zoom', '#visual-data-flow'], { opacity: 1, scale: 1, x: 0, y: 0 }, 0);
 
     // 1. HERO SPLIT (Explicit FromTo for reliability)
-    warpTl.fromTo(['#hero-content-left', '#ai-widget-left', '#hero-top-bar'], 
+    warpTl.fromTo(['#hero-content-left', '#hero-top-bar'],
       { x: 0, opacity: 1, scale: 1 },
-      { x: -800, opacity: 0, scale: 0.8, duration: 0.4, ease: 'power2.inOut' }, 
+      { x: -800, opacity: 0, scale: 0.8, duration: 0.4, ease: 'power2.inOut' },
       0
     );
 
-    warpTl.fromTo(['#hero-content-right', '#ai-widget-right'], 
+    warpTl.fromTo('#hero-content-right',
       { x: 0, opacity: 1, scale: 1 },
-      { x: 800, opacity: 0, scale: 0.8, duration: 0.4, ease: 'power2.inOut' }, 
+      { x: 800, opacity: 0, scale: 0.8, duration: 0.4, ease: 'power2.inOut' },
       0
     );
 
@@ -148,7 +156,7 @@ export default function Home() {
     return () => {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, []);
+  }, [reducedMotion]);
 
   const handleAppHubClick = () => {
     // Skip the warp and land on the start of <Landing /> (#app-hub-section).
@@ -173,7 +181,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+    <div className="landing-midnight min-h-screen bg-background text-foreground relative overflow-x-hidden">
       {/* ═══ Layer 0: Fixed 3D Background ═══ */}
       <div className="fixed inset-0 z-0">
         <BackgroundScene />
@@ -185,7 +193,7 @@ export default function Home() {
       {/* ═══ Hero — fixed to viewport. Stays visible throughout the warp pin
               range; the warp timeline fades it out (autoAlpha) when warp
               completes so Landing (at z-[5] below hero) shows through. ═══ */}
-      <section id="hero-section" className="fixed inset-0 w-full h-full flex flex-col justify-between py-4 md:py-4 2xl:py-8 overflow-hidden z-10">
+      <section id="hero-section" className={`${reducedMotion ? 'relative min-h-svh' : 'fixed inset-0 h-full'} w-full flex flex-col justify-between py-4 md:py-4 2xl:py-8 overflow-hidden z-10`}>
 
           {/* Visual Data Flow (Background of Hero) */}
           <VisualDataFlow />
@@ -203,7 +211,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <div className="container mx-auto px-6 md:px-12 lg:px-14 2xl:px-4 relative z-10 flex flex-col h-full pointer-events-none">
+          <div className="container mx-auto px-6 md:px-12 lg:px-16 2xl:px-20 relative z-10 flex flex-col h-full pointer-events-none">
             {/* Top Bar */}
             <div id="hero-top-bar" className="flex items-center justify-between w-full pointer-events-auto">
 
@@ -212,7 +220,7 @@ export default function Home() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs 2xl:text-sm font-semibold tracking-wide uppercase"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/25 text-brand text-xs 2xl:text-sm font-semibold tracking-wide uppercase"
                 >
                   <Zap size={14} className="fill-current" />
                   A-DXC WorkSpace Center
@@ -225,18 +233,17 @@ export default function Home() {
                   <ThemeToggle />
                 </motion.div>
               </div>
-
               <HeroTelemetry />
             </div>
 
-            {/* Left content — no grid, grows to fill remaining space */}
-            <div className="grow flex flex-col justify-center relative pointer-events-auto">
+            {/* Left content — pr reserves the right lane for the scene at each breakpoint */}
+            <div className="grow flex flex-col justify-center relative pointer-events-auto md:pr-[50%] lg:pr-[57%]">
               <div id="hero-content-left" className="space-y-6 md:space-y-8 2xl:space-y-10 max-w-xl">
                 <h1
                   ref={headingRef}
-                  className="text-3xl md:text-4xl lg:text-5xl 2xl:text-7xl font-extrabold tracking-tight leading-[1.1]"
+                  className="type-display"
                 >
-                  The Modern <span className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent italic pr-4">Workspace</span>
+                  The Modern <span className="text-brand">Workspace</span>
                 </h1>
 
                 <motion.p
@@ -257,14 +264,14 @@ export default function Home() {
                   <Button
                     size="lg"
                     onClick={() => router.push('/login')}
-                    className="rounded-full gap-2 px-8 bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 cursor-pointer"
+                    className="rounded-full gap-2 px-8 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
                   >
                     เข้าสู่ระบบ <Rocket size={18} />
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
-                    className="rounded-full gap-2 px-8 border-zinc-200 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm hover:bg-zinc-100 dark:hover:bg-white/10 transition-all cursor-pointer"
+                    className="rounded-full gap-2 px-8 border-border bg-white/5 text-foreground backdrop-blur-sm hover:bg-white/10 transition-all cursor-pointer"
                     onClick={handleAppHubClick}
                   >
                     เรียนรู้เพิ่มเติม <Info size={18} />

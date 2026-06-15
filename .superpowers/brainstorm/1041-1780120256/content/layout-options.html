@@ -1,0 +1,155 @@
+<h2>Permissions Page — เลือก Layout Approach</h2>
+<p class="subtitle">สามตัวเลือกต่อไปนี้ match กับ design system ของโปรเจค (shadcn/ui + Tailwind + Framer Motion) ทั้งหมด</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:280px;">
+      <!-- Tab bar -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div style="background:linear-gradient(135deg,#6366f1,#a855f7);color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;">⊞ Role Permissions</div>
+        <div style="background:#1e293b;color:#64748b;padding:6px 14px;border-radius:20px;font-size:11px;">👤 User Permissions</div>
+      </div>
+      <!-- Card header -->
+      <div style="background:#1e293b;border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <div style="color:white;font-weight:700;font-size:13px;">Role Permissions Settings</div>
+            <div style="color:#64748b;font-size:10px;">Manage role-based access</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">💾 Save Changes</div>
+        </div>
+        <!-- Section: Dashboard -->
+        <div style="background:#0f172a;border-radius:8px;padding:10px;">
+          <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Dashboard</div>
+          <div style="display:grid;grid-template-columns:1fr repeat(5,40px);gap:4px;align-items:center;">
+            <div style="color:#64748b;font-size:9px;">Role</div>
+            <div style="color:#64748b;font-size:9px;text-align:center;">View</div>
+            <div style="color:#64748b;font-size:9px;text-align:center;">Create</div>
+            <div style="color:#64748b;font-size:9px;text-align:center;">Update</div>
+            <div style="color:#64748b;font-size:9px;text-align:center;">Delete</div>
+            <div style="color:#64748b;font-size:9px;text-align:center;">Export</div>
+            <!-- Row -->
+            <div style="color:white;font-size:10px;">Super Admin</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="color:#94a3b8;font-size:10px;">Admin</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:12px;">✅</div>
+            <div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+            <div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+          </div>
+        </div>
+      </div>
+      <div style="color:#475569;font-size:9px;text-align:center;">— Sections collapse individually —</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Section Cards (แนะนำ)</h3>
+      <p>แต่ละ menu เป็น Card พับได้ (collapsible) · Tab pill ด้านบน · Save button sticky top-right · ดูเข้ากับ pattern ของ users/roles page มากที่สุด</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:280px;">
+      <!-- Two-panel layout -->
+      <div style="display:flex;gap:10px;height:240px;">
+        <!-- Left sidebar: menu list -->
+        <div style="background:#1e293b;border-radius:10px;padding:10px;width:100px;flex-shrink:0;">
+          <div style="color:#64748b;font-size:9px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Menus</div>
+          <div style="background:linear-gradient(135deg,#6366f1,#a855f7);color:white;padding:5px 8px;border-radius:6px;font-size:10px;margin-bottom:4px;">Dashboard</div>
+          <div style="color:#64748b;padding:5px 8px;font-size:10px;margin-bottom:4px;">Summary</div>
+          <div style="color:#64748b;padding:5px 8px;font-size:10px;margin-bottom:4px;">Case By Line</div>
+          <div style="color:#64748b;padding:5px 8px;font-size:10px;margin-bottom:4px;">Exports</div>
+          <div style="color:#64748b;padding:5px 8px;font-size:10px;">Working Calendar</div>
+        </div>
+        <!-- Right: permission table -->
+        <div style="background:#1e293b;border-radius:10px;padding:10px;flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="color:white;font-weight:700;font-size:12px;">Dashboard</div>
+            <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:4px 10px;border-radius:6px;font-size:9px;">💾 Save</div>
+          </div>
+          <!-- Tab -->
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <div style="background:#6366f1;color:white;padding:3px 10px;border-radius:12px;font-size:9px;">Role</div>
+            <div style="background:#0f172a;color:#64748b;padding:3px 10px;border-radius:12px;font-size:9px;">User</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr repeat(5,30px);gap:3px;align-items:center;">
+            <div style="color:#64748b;font-size:8px;">Role</div>
+            <div style="color:#64748b;font-size:8px;text-align:center;">V</div>
+            <div style="color:#64748b;font-size:8px;text-align:center;">C</div>
+            <div style="color:#64748b;font-size:8px;text-align:center;">U</div>
+            <div style="color:#64748b;font-size:8px;text-align:center;">D</div>
+            <div style="color:#64748b;font-size:8px;text-align:center;">E</div>
+            <div style="color:white;font-size:9px;">Super Admin</div>
+            <div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div>
+            <div style="color:#94a3b8;font-size:9px;">Admin</div>
+            <div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div>
+            <div style="color:#64748b;font-size:9px;">Supervisor</div>
+            <div style="text-align:center;font-size:10px;">✅</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div><div style="text-align:center;font-size:8px;color:#334155;">☐</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Split Panel</h3>
+      <p>Left sidebar แสดง menu list · Click เพื่อสลับ · Tab Role/User อยู่ใน panel · เหมาะถ้า menu เยอะมาก แต่ซับซ้อนกว่า</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:280px;">
+      <!-- Sticky header + scrollable grid -->
+      <div style="background:#1e293b;border-radius:10px;overflow:hidden;">
+        <!-- Sticky header -->
+        <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="background:#6366f1;color:white;padding:4px 12px;border-radius:16px;font-size:10px;font-weight:700;">Role</div>
+            <div style="color:#6366f1;padding:4px 12px;font-size:10px;">User</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">💾 Save Changes</div>
+        </div>
+        <!-- Mega table: menus as column groups -->
+        <div style="padding:10px;">
+          <div style="color:#64748b;font-size:9px;margin-bottom:6px;text-align:center;">— เมนูทั้งหมดในตารางเดียว (horizontal scroll) —</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:9px;">
+              <thead>
+                <tr>
+                  <th style="color:#94a3b8;text-align:left;padding:4px;"></th>
+                  <th colspan="2" style="color:#6366f1;text-align:center;padding:4px;border-bottom:2px solid #6366f1;">Dashboard</th>
+                  <th colspan="2" style="color:#a855f7;text-align:center;padding:4px;border-bottom:2px solid #a855f7;">Summary</th>
+                  <th colspan="2" style="color:#ec4899;text-align:center;padding:4px;border-bottom:2px solid #ec4899;">Case By Line</th>
+                </tr>
+                <tr>
+                  <th style="color:#64748b;text-align:left;padding:4px;">Role</th>
+                  <th style="color:#64748b;text-align:center;padding:4px;">View</th><th style="color:#64748b;text-align:center;padding:4px;">Edit</th>
+                  <th style="color:#64748b;text-align:center;padding:4px;">View</th><th style="color:#64748b;text-align:center;padding:4px;">Edit</th>
+                  <th style="color:#64748b;text-align:center;padding:4px;">View</th><th style="color:#64748b;text-align:center;padding:4px;">Edit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="color:white;padding:4px;">Super Admin</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td></tr>
+                <tr><td style="color:#94a3b8;padding:4px;">Admin</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#334155;">☐</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#334155;">☐</td></tr>
+                <tr><td style="color:#64748b;padding:4px;">Supervisor</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#334155;">☐</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#334155;">☐</td><td style="text-align:center;">✅</td><td style="text-align:center;color:#334155;">☐</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Mega Table (Horizontal)</h3>
+      <p>เมนูทั้งหมดเป็น column groups · scroll แนวนอน · เห็นภาพรวมทีเดียว · แต่อาจรับข้อมูลเยอะเกินไปในหน้าจอเล็ก</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">คลิกเลือก option ที่ชอบ หรือบอกในช่าง chat ก็ได้</p>

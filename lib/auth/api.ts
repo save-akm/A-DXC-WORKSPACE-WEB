@@ -87,10 +87,10 @@ async function request<T>(
   return parsed as T;
 }
 
-export function loginRequest(identifier: string, password: string) {
+export function loginRequest(identifier: string, password: string, rememberMe: boolean) {
   return request<LoginResponse>(authConfig.endpoints.login, {
     method: 'POST',
-    body: { identifier, password },
+    body: { identifier, password, rememberMe },
   });
 }
 

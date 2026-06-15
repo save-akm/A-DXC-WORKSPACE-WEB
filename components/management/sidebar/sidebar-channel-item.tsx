@@ -28,14 +28,16 @@ export function SidebarChannelItem({ channel }: SidebarChannelItemProps) {
         className={cn(
           'group/ch flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors',
           isActive
-            ? 'bg-gradient-to-r from-sky-400/20 via-sky-400/10 to-transparent text-foreground font-medium'
+            ? 'bg-gradient-to-r from-(--sidebar-menuactive-bg-from) via-(--sidebar-menuactive-bg-to) to-transparent font-medium text-foreground'
             : 'text-foreground/85 hover:bg-foreground/[0.08] hover:text-foreground',
         )}
       >
         <Hash
           className={cn(
             'size-4 shrink-0 transition-colors',
-            isActive ? 'text-sky-400' : 'text-foreground/70 group-hover/ch:text-foreground',
+            isActive
+              ? 'text-(--sidebar-menuactive-accent)'
+              : 'text-foreground/70 group-hover/ch:text-foreground',
           )}
         />
         <motion.span

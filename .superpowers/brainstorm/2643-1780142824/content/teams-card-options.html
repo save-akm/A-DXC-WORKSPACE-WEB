@@ -1,0 +1,223 @@
+<h2>Teams Page — เลือกสไตล์ Card</h2>
+<p class="subtitle">ทั้ง 3 แบบใช้ design system เดิม (shadcn/ui + Tailwind + dark/light mode) — เลือกที่ชอบ</p>
+
+<div class="cards">
+
+  <!-- Option A: Horizontal Banner Card -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:var(--bg-page,#0f172a);padding:14px;font-family:system-ui;min-height:300px;">
+
+      <!-- Page header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <div style="color:#e2e8f0;font-weight:700;font-size:13px;">Teams</div>
+          <div style="color:#64748b;font-size:10px;">ทีมทั้งหมดในระบบ · 6 ทีม</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#6366f1,#a855f7);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">+ สร้างทีม</div>
+      </div>
+
+      <!-- Card grid: 2 columns -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+        <!-- Card 1 -->
+        <div style="background:#1e293b;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);">
+          <!-- Banner gradient -->
+          <div style="height:52px;background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);position:relative;">
+            <!-- Logo circle -->
+            <div style="position:absolute;bottom:-14px;left:12px;width:28px;height:28px;border-radius:8px;background:#1e293b;border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;">A</div>
+          </div>
+          <div style="padding:18px 10px 10px;">
+            <div style="color:#e2e8f0;font-weight:700;font-size:11px;margin-bottom:2px;">Alpha Team</div>
+            <div style="color:#64748b;font-size:9px;margin-bottom:8px;">ทีม Backend</div>
+            <!-- Tags -->
+            <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">
+              <span style="background:rgba(99,102,241,0.15);color:#818cf8;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">DEVELOP</span>
+              <span style="background:rgba(20,184,166,0.15);color:#2dd4bf;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">INFRA</span>
+            </div>
+            <!-- Member avatars + project count -->
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;">
+                <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">ช</div>
+                <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#f97316);border:2px solid #1e293b;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">ญ</div>
+                <div style="width:20px;height:20px;border-radius:50%;background:rgba(100,116,139,0.3);border:2px solid #1e293b;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#94a3b8;">+4</div>
+              </div>
+              <div style="color:#64748b;font-size:9px;">📁 3 projects</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div style="background:#1e293b;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);">
+          <div style="height:52px;background:linear-gradient(135deg,#14b8a6,#06b6d4,#0ea5e9);position:relative;">
+            <div style="position:absolute;bottom:-14px;left:12px;width:28px;height:28px;border-radius:8px;background:#1e293b;border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#2dd4bf;">B</div>
+          </div>
+          <div style="padding:18px 10px 10px;">
+            <div style="color:#e2e8f0;font-weight:700;font-size:11px;margin-bottom:2px;">Beta Team</div>
+            <div style="color:#64748b;font-size:9px;margin-bottom:8px;">ทีม Frontend</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px;">
+              <span style="background:rgba(14,165,233,0.15);color:#38bdf8;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">DESIGN</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;">
+                <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14b8a6,#06b6d4);border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">ก</div>
+                <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);border:2px solid #1e293b;margin-left:-6px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;">น</div>
+              </div>
+              <div style="color:#64748b;font-size:9px;">📁 5 projects</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div style="color:#475569;font-size:9px;text-align:center;margin-top:8px;">— Banner gradient + logo overlay —</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Banner Card (แนะนำ)</h3>
+      <p>Banner gradient บนสุด · logo/ตัวอักษรทับ · tag pills · member avatars ซ้อนกัน · project count · เหมือน Notion / Linear team cards</p>
+    </div>
+  </div>
+
+  <!-- Option B: Compact Horizontal List Card -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:14px;font-family:system-ui;min-height:300px;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="color:#e2e8f0;font-weight:700;font-size:13px;">Teams</div>
+        <div style="background:linear-gradient(135deg,#6366f1,#a855f7);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">+ สร้างทีม</div>
+      </div>
+
+      <!-- Single column list of cards -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+
+        <div style="background:#1e293b;border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:12px;">
+          <!-- Color dot + icon -->
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;">A</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="color:#e2e8f0;font-weight:700;font-size:11px;">Alpha Team</span>
+              <span style="background:rgba(99,102,241,0.15);color:#818cf8;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">DEVELOP</span>
+              <span style="background:rgba(20,184,166,0.15);color:#2dd4bf;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">INFRA</span>
+            </div>
+            <div style="color:#64748b;font-size:9px;">ทีม Backend · 📁 3 projects</div>
+          </div>
+          <!-- Members -->
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="display:flex;">
+              <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700;">ช</div>
+              <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#f97316);border:2px solid #1e293b;margin-left:-7px;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700;">ญ</div>
+              <div style="width:22px;height:22px;border-radius:50%;background:#334155;border:2px solid #1e293b;margin-left:-7px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#94a3b8;">+4</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#1e293b;border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#14b8a6,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;">B</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="color:#e2e8f0;font-weight:700;font-size:11px;">Beta Team</span>
+              <span style="background:rgba(14,165,233,0.15);color:#38bdf8;padding:1px 6px;border-radius:6px;font-size:8px;font-weight:600;">DESIGN</span>
+            </div>
+            <div style="color:#64748b;font-size:9px;">ทีม Frontend · 📁 5 projects</div>
+          </div>
+          <div style="display:flex;">
+            <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#14b8a6,#06b6d4);border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700;">ก</div>
+            <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);border:2px solid #1e293b;margin-left:-7px;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700;">น</div>
+          </div>
+        </div>
+
+        <div style="background:#1e293b;border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:12px;opacity:0.6;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;">C</div>
+          <div style="flex:1;min-width:0;">
+            <div style="color:#e2e8f0;font-weight:700;font-size:11px;margin-bottom:3px;">Gamma Team</div>
+            <div style="color:#64748b;font-size:9px;">ทีม QA · 📁 2 projects</div>
+          </div>
+          <div style="display:flex;">
+            <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);border:2px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700;">ส</div>
+          </div>
+        </div>
+
+      </div>
+      <div style="color:#475569;font-size:9px;text-align:center;margin-top:8px;">— Horizontal row card เห็นได้เยอะกว่า —</div>
+    </div>
+    <div class="card-body">
+      <h3>B — Horizontal Row Card</h3>
+      <p>Logo สี่เหลี่ยมซ้าย · ชื่อ + tags กลาง · avatars ขวา · ดู list ได้เยอะในหน้าเดียว · เหมาะถ้าทีมเยอะ</p>
+    </div>
+  </div>
+
+  <!-- Option C: Magazine grid -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:14px;font-family:system-ui;min-height:300px;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="color:#e2e8f0;font-weight:700;font-size:13px;">Teams</div>
+        <div style="background:linear-gradient(135deg,#6366f1,#a855f7);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">+ สร้างทีม</div>
+      </div>
+
+      <!-- 3 column tight grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;">
+
+        <div style="background:#1e293b;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.06);">
+          <!-- Top: color bar + icon -->
+          <div style="height:3px;border-radius:2px;background:linear-gradient(to right,#6366f1,#a855f7);margin-bottom:8px;"></div>
+          <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;margin-bottom:6px;">A</div>
+          <div style="color:#e2e8f0;font-weight:700;font-size:10px;margin-bottom:1px;">Alpha Team</div>
+          <div style="color:#64748b;font-size:8px;margin-bottom:6px;">ทีม Backend</div>
+          <div style="display:flex;gap:3px;margin-bottom:7px;flex-wrap:wrap;">
+            <span style="background:rgba(99,102,241,0.15);color:#818cf8;padding:1px 5px;border-radius:5px;font-size:7px;font-weight:600;">DEVELOP</span>
+          </div>
+          <!-- members -->
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;">
+              <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);border:1.5px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:6px;color:white;">ช</div>
+              <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#f97316);border:1.5px solid #1e293b;margin-left:-5px;display:flex;align-items:center;justify-content:center;font-size:6px;color:white;">ญ</div>
+              <div style="width:18px;height:18px;border-radius:50%;background:#334155;border:1.5px solid #1e293b;margin-left:-5px;display:flex;align-items:center;justify-content:center;font-size:6px;color:#94a3b8;">+4</div>
+            </div>
+            <span style="font-size:8px;color:#475569;">3 proj</span>
+          </div>
+        </div>
+
+        <div style="background:#1e293b;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.06);">
+          <div style="height:3px;border-radius:2px;background:linear-gradient(to right,#14b8a6,#0ea5e9);margin-bottom:8px;"></div>
+          <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#14b8a6,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;margin-bottom:6px;">B</div>
+          <div style="color:#e2e8f0;font-weight:700;font-size:10px;margin-bottom:1px;">Beta Team</div>
+          <div style="color:#64748b;font-size:8px;margin-bottom:6px;">ทีม Frontend</div>
+          <div style="display:flex;gap:3px;margin-bottom:7px;">
+            <span style="background:rgba(14,165,233,0.15);color:#38bdf8;padding:1px 5px;border-radius:5px;font-size:7px;font-weight:600;">DESIGN</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;">
+              <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#14b8a6,#06b6d4);border:1.5px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:6px;color:white;">ก</div>
+              <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);border:1.5px solid #1e293b;margin-left:-5px;display:flex;align-items:center;justify-content:center;font-size:6px;color:white;">น</div>
+            </div>
+            <span style="font-size:8px;color:#475569;">5 proj</span>
+          </div>
+        </div>
+
+        <div style="background:#1e293b;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.06);">
+          <div style="height:3px;border-radius:2px;background:linear-gradient(to right,#a855f7,#ec4899);margin-bottom:8px;"></div>
+          <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;margin-bottom:6px;">C</div>
+          <div style="color:#e2e8f0;font-weight:700;font-size:10px;margin-bottom:1px;">Gamma</div>
+          <div style="color:#64748b;font-size:8px;margin-bottom:6px;">ทีม QA</div>
+          <div style="display:flex;gap:3px;margin-bottom:7px;">
+            <span style="background:rgba(168,85,247,0.15);color:#c084fc;padding:1px 5px;border-radius:5px;font-size:7px;font-weight:600;">QA</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;">
+              <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);border:1.5px solid #1e293b;display:flex;align-items:center;justify-content:center;font-size:6px;color:white;">ส</div>
+            </div>
+            <span style="font-size:8px;color:#475569;">2 proj</span>
+          </div>
+        </div>
+
+      </div>
+      <div style="color:#475569;font-size:9px;text-align:center;margin-top:8px;">— Compact 3-column grid · color accent bar บนสุด —</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Compact Grid (3 col)</h3>
+      <p>Color accent bar บนสุดแทน banner · logo เล็ก · 3 columns · ดู overview ได้เยอะ · เหมาะถ้าทีมเยอะมาก</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">คลิกเลือก หรือบอกใน chat ได้เลย</p>

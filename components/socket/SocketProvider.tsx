@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useMenuStore } from '@/lib/stores/menu-store';
+import { menuAction } from '@/lib/auth/actions';
 import { createSocketClient, disconnectSocket, emitOnline } from '@/lib/socket/socket-client';
 import type { Socket } from 'socket.io-client';
 
@@ -55,6 +57,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const client = createSocketClient(accessToken);
 
+    const handlePermissionsUpdated = async () => {
+      const token = useAuthStore.getState().accessToken;
+      if (!token) return;
+      const menus = await menuAction(token);
+      useMenuStore.getState().setMenus(menus);
+    };
+
     const profilePayload = {
       id: user.id,
       email: user.email,
@@ -83,6 +92,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     client.on('connect', handleConnect);
     client.on('connect_error', handleConnectError);
     client.on('disconnect', handleDisconnect);
+    client.on('permissions:updated', handlePermissionsUpdated);
     client.onAny(handleAny);
 
     client.connect();
@@ -92,6 +102,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       client.off('connect', handleConnect);
       client.off('connect_error', handleConnectError);
       client.off('disconnect', handleDisconnect);
+      client.off('permissions:updated', handlePermissionsUpdated);
       client.offAny(handleAny);
       disconnectSocket();
       setSocket(null);

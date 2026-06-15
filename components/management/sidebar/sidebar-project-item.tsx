@@ -72,14 +72,14 @@ export function SidebarProjectItem({ project }: SidebarProjectItemProps) {
         className={cn(
           'group/proj relative flex h-8 items-center gap-2.5 overflow-hidden rounded-md px-2 text-sm transition-colors',
           isActive
-            ? 'bg-gradient-to-r from-[var(--sidebar-menuactive-bg-from)] via-[var(--sidebar-menuactive-bg-to)] to-transparent text-foreground font-medium'
+            ? 'bg-gradient-to-r from-(--sidebar-menuactive-bg-from) via-(--sidebar-menuactive-bg-to) to-transparent font-medium text-foreground'
             : 'text-foreground/85 hover:bg-foreground/[0.08] hover:text-foreground',
         )}
       >
         {isActive ? (
           <motion.span
             layoutId="sidebar-project-active"
-            className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-sky-400"
+            className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-(--sidebar-menuactive-accent)"
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
           />
         ) : null}

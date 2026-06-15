@@ -23,6 +23,7 @@ export function SidebarSearch() {
           <input
             type="search"
             name="sidebar-search"
+            aria-label="Search navigation"
             placeholder="Search..."
             autoComplete="off"
             autoCorrect="off"

@@ -1,0 +1,117 @@
+<h2>Save Behavior — เมื่อ tick/untick checkbox แล้วบันทึกยังไง?</h2>
+<p class="subtitle">ส่งผลต่อ UX และ visual ของหน้าโดยตรง</p>
+
+<div class="cards">
+
+  <!-- Option 1: Auto-save per checkbox -->
+  <div class="card" data-choice="autosave" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:240px;">
+      <!-- No save button, just checkboxes with instant feedback -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="color:white;font-weight:700;font-size:12px;">Role Permissions Settings</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 1s infinite;"></div>
+          <span style="color:#10b981;font-size:10px;">Auto-saved</span>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-radius:10px;padding:12px;margin-bottom:8px;">
+        <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Dashboard</div>
+        <div style="display:grid;grid-template-columns:1fr repeat(5,44px);gap:4px;align-items:center;">
+          <div style="color:#64748b;font-size:9px;">Role</div>
+          <div style="color:#64748b;font-size:9px;text-align:center;">View</div><div style="color:#64748b;font-size:9px;text-align:center;">Create</div><div style="color:#64748b;font-size:9px;text-align:center;">Update</div><div style="color:#64748b;font-size:9px;text-align:center;">Delete</div><div style="color:#64748b;font-size:9px;text-align:center;">Export</div>
+          <div style="color:white;font-size:10px;">Super Admin</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div>
+          <div style="color:#94a3b8;font-size:10px;">Admin</div>
+          <!-- Checkbox that was just changed - showing loading spinner -->
+          <div style="text-align:center;font-size:13px;">✅</div>
+          <div style="text-align:center;">
+            <div style="width:14px;height:14px;border:2px solid #6366f1;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;"></div>
+          </div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+        </div>
+      </div>
+      <div style="background:#0f4c27;border:1px solid #10b981;border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:6px;">
+        <span style="color:#10b981;font-size:11px;">✓</span>
+        <span style="color:#10b981;font-size:10px;">บันทึก Admin · Create · Dashboard สำเร็จ</span>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}</style>
+    </div>
+    <div class="card-body">
+      <h3>Auto-save ทันที</h3>
+      <p>tick/untick แล้ว save ทันที · แสดง spinner ระหว่าง save · toast "สำเร็จ" · ไม่มีปุ่ม Save · เรียบง่ายสุด แต่ถ้า internet ช้าอาจ spam API</p>
+    </div>
+  </div>
+
+  <!-- Option 2: Manual save with dirty tracking -->
+  <div class="card" data-choice="dirty-tracking" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:240px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="color:white;font-weight:700;font-size:12px;">Role Permissions Settings</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:#f59e0b;font-size:10px;">● มีการเปลี่ยนแปลง 3 รายการ</span>
+          <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;box-shadow:0 0 12px rgba(16,185,129,0.4);">💾 Save Changes</div>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-radius:10px;padding:12px;margin-bottom:8px;">
+        <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Dashboard</div>
+        <div style="display:grid;grid-template-columns:1fr repeat(5,44px);gap:4px;align-items:center;">
+          <div style="color:#64748b;font-size:9px;">Role</div>
+          <div style="color:#64748b;font-size:9px;text-align:center;">View</div><div style="color:#64748b;font-size:9px;text-align:center;">Create</div><div style="color:#64748b;font-size:9px;text-align:center;">Update</div><div style="color:#64748b;font-size:9px;text-align:center;">Delete</div><div style="color:#64748b;font-size:9px;text-align:center;">Export</div>
+          <div style="color:white;font-size:10px;">Super Admin</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div>
+          <!-- Admin row with changed cells highlighted -->
+          <div style="color:#94a3b8;font-size:10px;">Admin</div>
+          <div style="text-align:center;font-size:13px;">✅</div>
+          <!-- Changed cell - amber highlight -->
+          <div style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);border-radius:4px;text-align:center;font-size:10px;color:#334155;">☐</div>
+          <div style="text-align:center;font-size:13px;">✅</div>
+          <!-- Changed cell -->
+          <div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);border-radius:4px;text-align:center;font-size:13px;">✅</div>
+          <div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+          <div style="color:#64748b;font-size:10px;">Supervisor</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;padding:0 2px;">
+        <span style="color:#475569">🟡 = เปลี่ยน (ยังไม่ save) · 🟢 = เพิ่งเพิ่ม</span>
+        <span style="color:#64748b;cursor:pointer;text-decoration:underline;">↩ ยกเลิกทั้งหมด</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Manual Save + Dirty Tracking (แนะนำ)</h3>
+      <p>tick/untick แล้ว highlight ช่องที่เปลี่ยน · นับจำนวนการเปลี่ยน · ปุ่ม Save จะ active ทันที · กด Save ค่อย call API · ปลอดภัย ไม่ spam</p>
+    </div>
+  </div>
+
+  <!-- Option 3: Simple save button, no tracking -->
+  <div class="card" data-choice="simple-save" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:16px;font-family:system-ui;min-height:240px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="color:white;font-weight:700;font-size:12px;">Role Permissions Settings</div>
+        <!-- Save button always visible but changes color when dirty -->
+        <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:5px 12px;border-radius:8px;font-size:10px;font-weight:600;">💾 Save Changes</div>
+      </div>
+      <div style="background:#1e293b;border-radius:10px;padding:12px;margin-bottom:8px;">
+        <div style="color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Dashboard</div>
+        <div style="display:grid;grid-template-columns:1fr repeat(5,44px);gap:4px;align-items:center;">
+          <div style="color:#64748b;font-size:9px;">Role</div>
+          <div style="color:#64748b;font-size:9px;text-align:center;">View</div><div style="color:#64748b;font-size:9px;text-align:center;">Create</div><div style="color:#64748b;font-size:9px;text-align:center;">Update</div><div style="color:#64748b;font-size:9px;text-align:center;">Delete</div><div style="color:#64748b;font-size:9px;text-align:center;">Export</div>
+          <div style="color:white;font-size:10px;">Super Admin</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div>
+          <div style="color:#94a3b8;font-size:10px;">Admin</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+          <div style="color:#64748b;font-size:10px;">Supervisor</div>
+          <div style="text-align:center;font-size:13px;">✅</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div><div style="text-align:center;font-size:10px;color:#334155;">☐</div>
+        </div>
+      </div>
+      <div style="color:#475569;font-size:9px;text-align:center;">ไม่มี visual ว่าช่องไหนเปลี่ยน · save รวมทีเดียว · เรียบง่ายที่สุด</div>
+    </div>
+    <div class="card-body">
+      <h3>Simple Save Button</h3>
+      <p>ปุ่ม Save อยู่ที่มุมขวาบน · ไม่ track การเปลี่ยน · กด Save ส่งค่าทั้งหมดไป API · ง่ายสุด แต่ไม่รู้ว่าเปลี่ยนอะไรบ้าง</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:12px;">คลิกเลือก หรือบอกใน chat ได้เลย</p>

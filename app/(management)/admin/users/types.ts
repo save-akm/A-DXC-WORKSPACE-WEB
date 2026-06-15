@@ -1,17 +1,25 @@
+export type UserStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'TERMINATED';
+
 export interface User {
   id: string;
   employeeId: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string | null;
-  department: string;
-  branch: string;
-  role: string;
-  position: string;
-  status: "active" | "inactive";
+  nickname: string | null;
   avatarUrl: string | null;
-  color: string;
-  bannerGradient: string;
-  lastLogin: string;
+  phone: string | null;
+  branch: string;
+  department: string;
+  role: string;
+  position: string | null;
+  status: UserStatus;
+  mustChangePassword: boolean;
+}
+
+export interface UsersApiResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
 }

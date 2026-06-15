@@ -77,7 +77,7 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
   };
 
   const exec = async (): Promise<Response> =>
-    fetch(authConfig.apiUrl + path, {
+    fetch("/api/_proxy" + path, {
       ...init,
       headers: await buildHeaders(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
