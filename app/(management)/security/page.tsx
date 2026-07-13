@@ -10,7 +10,7 @@ import type { SecurityPreset } from './components/security-form';
 
 const mockPreset: SecurityPreset = {
   twoFactorEnabled: false,
-  loginAlertsEnabled: true,
+  loginAlertsEnabled: false,
   loginHistory: [],
   activeSessions: [],
 };

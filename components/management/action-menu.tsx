@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
@@ -15,25 +15,54 @@ export interface ActionItem {
   onClick: () => void;
 }
 
-export function ActionMenu({ actions }: { actions: ActionItem[] }) {
+// Estimated menu height per item — used to decide whether to open upward.
+const ITEM_HEIGHT = 32;
+const MENU_PADDING = 8;
+const GAP = 4;
+
+export function ActionMenu({ actions, triggerClassName, triggerSize = 'icon-xs' }: { actions: ActionItem[]; triggerClassName?: string; triggerSize?: 'icon-xs' | 'icon-sm' | 'icon' }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; right: number }>({ top: 0, right: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleToggle = () => {
-    if (!open && containerRef.current) {
-      const r = containerRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+  const computePos = useCallback(() => {
+    if (!containerRef.current) return;
+    const r = containerRef.current.getBoundingClientRect();
+    const right = window.innerWidth - r.right;
+    const menuHeight = actions.length * ITEM_HEIGHT + MENU_PADDING;
+    const spaceBelow = window.innerHeight - r.bottom;
+    // Flip upward when there isn't enough room below the trigger.
+    if (spaceBelow < menuHeight + GAP && r.top > spaceBelow) {
+      setPos({ bottom: window.innerHeight - r.top + GAP, right });
+    } else {
+      setPos({ top: r.bottom + GAP, right });
     }
+  }, [actions.length]);
+
+  // Keep the menu glued to its trigger while scrolling/resizing.
+  useEffect(() => {
+    if (!open) return;
+    const onChange = () => computePos();
+    window.addEventListener('scroll', onChange, true);
+    window.addEventListener('resize', onChange);
+    return () => {
+      window.removeEventListener('scroll', onChange, true);
+      window.removeEventListener('resize', onChange);
+    };
+  }, [open, computePos]);
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!open) computePos();
     setOpen((v) => !v);
   };
 
   return (
-    <div ref={containerRef}>
-      <Button variant="ghost" size="icon-sm" className="cursor-pointer" onClick={handleToggle}>
+    <div ref={containerRef} onClick={e => e.stopPropagation()}>
+      <Button variant="ghost" size={triggerSize} className={cn("cursor-pointer", triggerClassName)} onClick={handleToggle}>
         <MoreHorizontal size={14} />
       </Button>
 
@@ -41,14 +70,14 @@ export function ActionMenu({ actions }: { actions: ActionItem[] }) {
         <AnimatePresence>
           {open && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+              <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
               <motion.div
-                style={{ position: "fixed", top: pos.top, right: pos.right }}
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                style={{ position: "fixed", top: pos.top, bottom: pos.bottom, right: pos.right }}
+                initial={{ opacity: 0, scale: 0.95, y: pos.bottom !== undefined ? 4 : -4 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                exit={{ opacity: 0, scale: 0.95, y: pos.bottom !== undefined ? 4 : -4 }}
                 transition={{ duration: 0.12 }}
-                className="z-50 w-36 rounded-xl border bg-popover p-1 shadow-xl"
+                className="z-[61] w-36 rounded-xl border bg-popover p-1 shadow-xl"
               >
                 {actions.map((action) => {
                   const Icon = action.icon;
@@ -56,7 +85,8 @@ export function ActionMenu({ actions }: { actions: ActionItem[] }) {
                     <button
                       key={action.label}
                       disabled={action.disabled}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!action.disabled) {
                           action.onClick();
                           setOpen(false);

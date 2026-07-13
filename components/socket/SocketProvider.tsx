@@ -77,33 +77,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       emitOnline(profilePayload);
     };
 
-    const handleConnectError = (error: unknown) => {
-      console.error('[SocketProvider] connect_error', error);
-    };
-
-    const handleDisconnect = (reason: string) => {
-      console.info('[SocketProvider] disconnected', reason);
-    };
-
-    const handleAny = (event: string, ...args: unknown[]) => {
-      console.info('[SocketProvider] onAny', event, args);
-    };
-
     client.on('connect', handleConnect);
-    client.on('connect_error', handleConnectError);
-    client.on('disconnect', handleDisconnect);
     client.on('permissions:updated', handlePermissionsUpdated);
-    client.onAny(handleAny);
 
     client.connect();
     setSocket(client);
 
     return () => {
       client.off('connect', handleConnect);
-      client.off('connect_error', handleConnectError);
-      client.off('disconnect', handleDisconnect);
       client.off('permissions:updated', handlePermissionsUpdated);
-      client.offAny(handleAny);
       disconnectSocket();
       setSocket(null);
     };

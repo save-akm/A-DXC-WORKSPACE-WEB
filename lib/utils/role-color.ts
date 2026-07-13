@@ -32,6 +32,26 @@ export function roleBadgeClass(roleName: string): string {
   return ROLE_BADGE_CLASSES[roleName] ?? 'bg-muted text-muted-foreground';
 }
 
+/** Convert hex color (#rrggbb) to rgba for badge background tint. */
+export function hexToRgba(hex: string, alpha: number): string {
+  const cleaned = hex.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+    return `rgba(107, 114, 128, ${alpha})`;
+  }
+  const r = parseInt(cleaned.slice(0, 2), 16);
+  const g = parseInt(cleaned.slice(2, 4), 16);
+  const b = parseInt(cleaned.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/** Inline badge style from API role color. */
+export function roleBadgeStyle(color: string): { backgroundColor: string; color: string } {
+  return {
+    backgroundColor: hexToRgba(color, 0.15),
+    color,
+  };
+}
+
 /** bg-* color key (used by roles page) → badge display classes */
 export const ROLE_COLOR_BADGE_CLASSES: Record<string, string> = {
   'bg-violet-500':  'bg-violet-100  text-violet-700  dark:bg-violet-500/20  dark:text-violet-300',

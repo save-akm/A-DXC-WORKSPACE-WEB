@@ -1,4 +1,3 @@
-import { authConfig } from '@/lib/auth/config';
 import { AuthApiError } from '@/lib/auth/api';
 import { apiFetch } from '@/lib/auth/client';
 
@@ -48,16 +47,18 @@ async function unwrap<T>(res: Response): Promise<T> {
 }
 
 const endpoints = {
-  changePassword: '/me/password',
-  twoFactor: '/me/2fa',
-  loginAlerts: '/me/login-alerts',
+  changePassword: '/auth/change-password',
+  twoFactor: '/auth/2fa/toggle',
+  twoFactorStatus: '/auth/2fa/status',
+  twoFactorSetup: '/auth/2fa/setup',
+  preferences: '/auth/me/preferences',
   loginHistory: '/auth/me/login-history',
   sessions: '/auth/sessions',
   revokeOtherSessions: '/auth/sessions/revoke-others',
 } as const;
 
 export interface ChangePasswordBody {
-  currentPassword: string;
+  oldPassword: string;
   newPassword: string;
 }
 
@@ -91,9 +92,9 @@ export interface ActiveSession {
 export async function changePasswordRequest(
   accessToken: string,
   body: ChangePasswordBody,
-): Promise<{ changedAt: string }> {
-  const res = await fetch(authConfig.apiUrl + endpoints.changePassword, {
-    method: 'PATCH',
+): Promise<void> {
+  const res = await fetch('/api/_proxy' + endpoints.changePassword, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
@@ -101,14 +102,46 @@ export async function changePasswordRequest(
     body: JSON.stringify(body),
     cache: 'no-store',
   });
-  return unwrap<{ changedAt: string }>(res);
+  await unwrap<void>(res);
 }
 
-export async function updateSecurityRequest(
+export async function setup2FARequest(
   accessToken: string,
-  body: Pick<SecurityUpdateBody, 'twoFactorEnabled' | 'loginAlertsEnabled'>,
-): Promise<{ twoFactorEnabled: boolean; loginAlertsEnabled: boolean }> {
-  const res = await fetch(authConfig.apiUrl + endpoints.twoFactor, {
+  pin: string,
+): Promise<void> {
+  const res = await fetch('/api/_proxy' + endpoints.twoFactorSetup, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ pin }),
+    cache: 'no-store',
+  });
+  await unwrap<void>(res);
+}
+
+export async function toggle2FARequest(
+  accessToken: string,
+  enabled: boolean,
+): Promise<void> {
+  const res = await fetch('/api/_proxy' + endpoints.twoFactor, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ enabled }),
+    cache: 'no-store',
+  });
+  await unwrap<void>(res);
+}
+
+export async function updatePreferencesRequest(
+  accessToken: string,
+  body: { notifyNewDevice: boolean },
+): Promise<void> {
+  const res = await fetch('/api/_proxy' + endpoints.preferences, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -117,7 +150,7 @@ export async function updateSecurityRequest(
     body: JSON.stringify(body),
     cache: 'no-store',
   });
-  return unwrap(res);
+  await unwrap<void>(res);
 }
 
 export async function revokeOtherSessionsRequest(
@@ -165,12 +198,29 @@ export async function fetchSessionsRequest(): Promise<ActiveSession[]> {
   }));
 }
 
-export async function fetchLoginHistoryRequest(
-  page = 1,
-  limit = 20,
-): Promise<LoginHistoryEntry[]> {
-  const env = await apiFetch<ApiEnvelope<{ items: LoginHistoryEntry[] }>>(
-    `${endpoints.loginHistory}?page=${page}&limit=${limit}`,
-  );
-  return env?.data?.items ?? [];
+export async function fetchLoginHistoryRequest(): Promise<LoginHistoryEntry[]> {
+  const env = await apiFetch<ApiEnvelope<{ history: LoginHistoryEntry[] }>>(endpoints.loginHistory);
+  return env?.data?.history ?? [];
+}
+
+export interface SecurityPreferences {
+  twoFactorEnabled: boolean;
+  notifyNewDevice: boolean;
+  hasPin: boolean;
+}
+
+interface MeDataShape {
+  user?: { notifyNewDevice?: boolean };
+}
+
+export async function fetchSecurityPreferencesRequest(): Promise<SecurityPreferences> {
+  const [meEnv, tfaEnv] = await Promise.all([
+    apiFetch<ApiEnvelope<MeDataShape>>('/auth/me'),
+    apiFetch<ApiEnvelope<{ enabled: boolean; hasPin: boolean }>>(endpoints.twoFactorStatus),
+  ]);
+  return {
+    twoFactorEnabled: tfaEnv?.data?.enabled ?? false,
+    notifyNewDevice: meEnv?.data?.user?.notifyNewDevice ?? false,
+    hasPin: tfaEnv?.data?.hasPin ?? false,
+  };
 }

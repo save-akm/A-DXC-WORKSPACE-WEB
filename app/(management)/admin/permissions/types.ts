@@ -1,7 +1,7 @@
-export type PermissionAction = 'view' | 'create' | 'update' | 'delete' | 'export';
+export type PermissionAction = 'view' | 'create' | 'update' | 'delete' | 'export' | 'highPrivilege';
 
-export const ROLE_ACTIONS: PermissionAction[] = ['view', 'create', 'update', 'delete', 'export'];
-export const USER_ACTIONS: PermissionAction[] = ['view', 'create', 'update', 'delete'];
+export const ROLE_ACTIONS: PermissionAction[] = ['view', 'create', 'update', 'delete', 'export', 'highPrivilege'];
+export const USER_ACTIONS: PermissionAction[] = ['view', 'create', 'update', 'delete', 'highPrivilege'];
 
 export const ACTION_LABELS: Record<PermissionAction, string> = {
   view: 'View',
@@ -9,6 +9,7 @@ export const ACTION_LABELS: Record<PermissionAction, string> = {
   update: 'Update',
   delete: 'Delete',
   export: 'Export',
+  highPrivilege: 'High Privilege',
 };
 
 /** One role's permissions for one menu */
@@ -42,11 +43,12 @@ export interface UserPermissionPage {
   pageSize: number;
 }
 
-/** A menu item as returned by GET /menus/my (used for the dropdown) */
+/** A menu item as returned by GET /permissions/menus (used for the dropdown) */
 export interface MenuItem {
   id: string;
   name: string;
   code: string;
+  isActive: boolean;
 }
 
 /**

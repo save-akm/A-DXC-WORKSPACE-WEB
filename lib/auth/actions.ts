@@ -11,6 +11,7 @@ import {
   refreshRequest,
   resetPasswordRequest,
   updatePasswordRequest,
+  verify2FARequest,
 } from './api';
 import { clearRefreshCookie, getRefreshCookie, setRefreshCookie } from './cookies';
 import type { AuthUser, ForgotPasswordActionState, LoginActionState, MenuNode, RefreshActionState, ResetPasswordActionState, UpdatePasswordActionState } from './types';
@@ -39,6 +40,9 @@ export async function loginAction(
   try {
     const ua = (await headers()).get('user-agent') ?? undefined;
     const res = await loginRequest(identifier, password, rememberMe, ua);
+    if (res.twoFactorRequired) {
+      return { status: 'two-factor', twoFactorToken: res.twoFactorToken, rememberMe };
+    }
     const [user, menus] = await Promise.all([
       meRequest(res.accessToken),
       menuRequest(res.accessToken).catch((e) => {
@@ -80,6 +84,45 @@ export async function loginAction(
   }
 }
 
+export async function verify2FAAction(
+  twoFactorToken: string,
+  pin: string,
+  rememberMe: boolean,
+): Promise<LoginActionState> {
+  try {
+    const res = await verify2FARequest({ twoFactorToken, pin, rememberMe });
+    const [user, menus] = await Promise.all([
+      meRequest(res.accessToken),
+      menuRequest(res.accessToken).catch(() => [] as MenuNode[]),
+    ]);
+    if (res.mustChangePassword) {
+      return {
+        status: 'success',
+        data: {
+          user, menus,
+          accessToken: res.accessToken,
+          expiresAt: Date.now() + res.expiresIn * 1000,
+          mustChangePassword: true,
+          pendingRefreshToken: res.refreshToken,
+        },
+      };
+    }
+    await setRefreshCookie(res.refreshToken);
+    return {
+      status: 'success',
+      data: {
+        user, menus,
+        accessToken: res.accessToken,
+        expiresAt: Date.now() + res.expiresIn * 1000,
+        mustChangePassword: false,
+      },
+    };
+  } catch (e) {
+    const { message, code } = mapError(e, 'รหัส PIN ไม่ถูกต้อง');
+    return { status: 'error', error: message, code };
+  }
+}
+
 export async function refreshAction(): Promise<RefreshActionState> {
   const token = await getRefreshCookie();
   if (!token) return { status: 'error', error: 'NO_REFRESH_TOKEN' };
@@ -91,6 +134,7 @@ export async function refreshAction(): Promise<RefreshActionState> {
       status: 'success',
       accessToken: res.accessToken,
       expiresAt: Date.now() + res.expiresIn * 1000,
+      menus: res.menus,
     };
   } catch {
     await clearRefreshCookie();
@@ -130,7 +174,6 @@ export async function logoutAction(accessToken: string | null): Promise<{ ok: bo
 
 export async function updatePasswordAction(
   accessToken: string,
-  refreshToken: string,
   _prev: UpdatePasswordActionState,
   formData: FormData,
 ): Promise<UpdatePasswordActionState> {
@@ -142,11 +185,16 @@ export async function updatePasswordAction(
   if (newPassword !== confirmPassword) return { status: 'error', error: 'รหัสผ่านไม่ตรงกัน' };
 
   try {
-    await updatePasswordRequest(accessToken, newPassword);
-    // Only activate the session cookie after the password change succeeds,
-    // so a page refresh before this point keeps the user on /login.
-    await setRefreshCookie(refreshToken);
-    return { status: 'success' };
+    const tokens = await updatePasswordRequest(accessToken, newPassword);
+    // Backend revokes all old sessions on password change and returns a fresh
+    // token pair. Activate the cookie with the new refresh token only now so
+    // that a page refresh before this point keeps the user on /login.
+    await setRefreshCookie(tokens.refreshToken);
+    return {
+      status: 'success',
+      accessToken: tokens.accessToken,
+      expiresAt: Date.now() + tokens.expiresIn * 1000,
+    };
   } catch (e) {
     const { message } = mapError(e, 'ไม่สามารถเปลี่ยนรหัสผ่านได้');
     return { status: 'error', error: message };

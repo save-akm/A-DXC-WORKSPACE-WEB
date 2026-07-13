@@ -4,11 +4,14 @@
 import { motion } from 'framer-motion';
 
 export type CheckboxState = 'checked' | 'unchecked' | 'dirty-added' | 'dirty-removed';
+export type CheckboxVariant = 'default' | 'privilege';
 
 interface PermissionCheckboxProps {
   state: CheckboxState;
   onToggle: () => void;
   disabled?: boolean;
+  /** 'privilege' renders an amber/orange treatment for high-privilege actions. */
+  variant?: CheckboxVariant;
 }
 
 const BASE =
@@ -24,8 +27,16 @@ const STATE_CLASSES: Record<CheckboxState, string> = {
     'bg-transparent border border-red-500/50 outline outline-2 outline-red-500/20 outline-offset-1',
 };
 
-export function PermissionCheckbox({ state, onToggle, disabled }: PermissionCheckboxProps) {
+const PRIVILEGE_STATE_CLASSES: Record<CheckboxState, string> = {
+  ...STATE_CLASSES,
+  checked:
+    'bg-gradient-to-br from-amber-500 to-orange-600 shadow-[0_2px_8px_rgba(245,158,11,0.45)]',
+  unchecked: 'bg-transparent border border-amber-500/40',
+};
+
+export function PermissionCheckbox({ state, onToggle, disabled, variant = 'default' }: PermissionCheckboxProps) {
   const showCheck = state === 'checked' || state === 'dirty-added';
+  const classes = variant === 'privilege' ? PRIVILEGE_STATE_CLASSES : STATE_CLASSES;
 
   return (
     <motion.div
@@ -38,7 +49,7 @@ export function PermissionCheckbox({ state, onToggle, disabled }: PermissionChec
           onToggle();
         }
       }}
-      className={`${BASE} ${STATE_CLASSES[state]} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+      className={`${BASE} ${classes[state]} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       onClick={disabled ? undefined : onToggle}
       whileTap={disabled ? undefined : { scale: 0.82 }}
       animate={{ scale: 1 }}

@@ -7,11 +7,17 @@ export interface AuthUser {
   nickname: string | null;
   avatarUrl: string | null;
   phone: string | null;
+  commuteMinutes: number | null;
+  locale: string | null;
+  timezone: string | null;
   branch: string;
   department: string;
   role: string;
+  roleSortOrder: number;
   position: string;
   status: string;
+  twoFactorEnabled?: boolean;
+  notifyNewDevice?: boolean;
 }
 
 export interface AuthTokens {
@@ -20,11 +26,11 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
-export interface LoginResponse extends AuthTokens {
-  mustChangePassword: boolean;
-}
+export type LoginResponse =
+  | (AuthTokens & { twoFactorRequired?: false; mustChangePassword: boolean })
+  | { twoFactorRequired: true; twoFactorToken: string };
 
-export type RefreshResponse = AuthTokens;
+export type RefreshResponse = AuthTokens & { menus?: MenuNode[] };
 
 export type MenuNodeType = 'GROUP' | 'MENU';
 export type MenuPermission = 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE' | 'EXPORT';
@@ -54,15 +60,16 @@ export interface SessionData {
 export type LoginActionState =
   | { status: 'idle' }
   | { status: 'success'; data: SessionData }
+  | { status: 'two-factor'; twoFactorToken: string; rememberMe: boolean }
   | { status: 'error'; error: string; code?: string };
 
 export type UpdatePasswordActionState =
   | { status: 'idle' }
-  | { status: 'success' }
+  | { status: 'success'; accessToken: string; expiresAt: number }
   | { status: 'error'; error: string };
 
 export type RefreshActionState =
-  | { status: 'success'; accessToken: string; expiresAt: number }
+  | { status: 'success'; accessToken: string; expiresAt: number; menus?: MenuNode[] }
   | { status: 'error'; error: string };
 
 export type ForgotPasswordActionState =

@@ -38,12 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         store.setTokens({ accessToken: res.accessToken, expiresAt: res.expiresAt });
         const [user, menus] = await Promise.all([
           meAction(res.accessToken),
-          menuAction(res.accessToken),
+          res.menus ? Promise.resolve(res.menus) : menuAction(res.accessToken),
         ]);
         if (user) store.setUser(user);
         if (menus.length > 0) {
           useMenuStore.getState().setMenus(menus);
-        } else {
+        } else if (!res.menus) {
           // menuAction returned [] — backend session hasn't propagated yet
           // (read-after-write lag). Don't overwrite cached menus; retry once
           // after a short delay when the DB is guaranteed to be consistent.

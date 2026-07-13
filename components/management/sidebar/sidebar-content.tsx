@@ -7,13 +7,13 @@ import { SidebarProfile } from './sidebar-profile';
 import { SidebarProjectItem } from './sidebar-project-item';
 import { SidebarSearch } from './sidebar-search';
 import { SidebarSection } from './sidebar-section';
-import { SidebarWorkspace } from './sidebar-workspace';
+import { SidebarWorkspace2 } from './sidebar-workspace2';
 
 export function SidebarContent() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-3 p-3">
-        <SidebarWorkspace />
+        <SidebarWorkspace2 />
         <SidebarSearch />
       </div>
 

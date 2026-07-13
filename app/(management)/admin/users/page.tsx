@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -29,14 +29,19 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { normalizeRoleName } from "@/lib/utils/role-color";
-import { fetchAllUsers, fetchRoles, fetchBranches, fetchDepartments, fetchPositions } from "@/lib/api/users";
-import type { SelectOption, DepartmentOption } from "./components/user-modal";
+import { fetchAllUsers, fetchRoles, fetchBranches, fetchDepartments, fetchPositions, createUser, updateUser, deleteUser, uploadAvatar, deleteAvatar } from "@/lib/api/users";
+import type { UpdateUserBody } from "@/lib/api/users";
+import type { SelectOption, DepartmentOption, InviteUserInput } from "./components/user-modal";
+import { toast } from "@/components/ui/toast";
 
 import { type User } from "./types";
 import { RoleBadge }  from "./components/role-badge";
 import { StatusDot }  from "./components/status-dot";
 import { UserModal } from "./components/user-modal";
+import { EditUserModal } from "./components/edit-user-modal";
 import { Button } from "@/components/ui/button";
+import { useMenuPermission } from "@/lib/hooks/use-menu-permission";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { StatCard }   from "@/components/management/stat-card";
 import { PageHeader } from "@/components/management/page-header";
 import { ActionMenu } from "@/components/management/action-menu";
@@ -126,6 +131,15 @@ function GridCardSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const { canView, canCreate, canUpdate, canDelete } = useMenuPermission('users');
+  const authUser    = useAuthStore((s) => s.user);
+  const setAuthUser = useAuthStore((s) => s.setUser);
+  const noNode    = !canView && !canCreate && !canUpdate && !canDelete;
+  const hasView   = noNode || canView;
+  const hasCreate = noNode || canCreate;
+  const hasUpdate = noNode || canUpdate;
+  const hasDelete = noNode || canDelete;
+
   const [users,      setUsers]      = useState<User[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [view,       setView]       = useState<"table" | "grid">("table");
@@ -134,10 +148,19 @@ export default function UsersPage() {
   const [deptFilter, setDeptFilter] = useState("All");
   const [page,       setPage]       = useState(1);
   const [drawerOpen,   setDrawerOpen]   = useState(false);
+  const [editUser,     setEditUser]     = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleting,     setDeleting]     = useState(false);
   const [roleOptions,   setRoleOptions]   = useState<SelectOption[]>([]);
   const [branchOptions,     setBranchOptions]     = useState<SelectOption[]>([]);
   const [departmentOptions, setDepartmentOptions] = useState<DepartmentOption[]>([]);
   const [positionOptions,   setPositionOptions]   = useState<SelectOption[]>([]);
+
+  const loadUsers = useCallback(async () => {
+    const all = await fetchAllUsers();
+    setUsers(all);
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     Promise.all([fetchAllUsers(), fetchRoles(), fetchBranches(), fetchDepartments(), fetchPositions()])
@@ -151,9 +174,76 @@ export default function UsersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleUpdateUser = useCallback(async (id: string, body: UpdateUserBody) => {
+    try {
+      const updated = await updateUser(id, body);
+      setUsers((prev) => prev.map((u) => u.id === id ? updated : u));
+      toast.success('อัปเดตผู้ใช้สำเร็จ');
+    } catch (err) {
+      toast.error((err as Error)?.message || 'อัปเดตผู้ใช้ไม่สำเร็จ');
+      throw err;
+    }
+  }, []);
+
+  const handleUploadAvatar = useCallback(async (id: string, file: File) => {
+    try {
+      const updated = await uploadAvatar(id, file);
+      setUsers((prev) => prev.map((u) => u.id === id ? updated : u));
+      if (authUser?.id === id) setAuthUser({ ...authUser, avatarUrl: updated.avatarUrl });
+    } catch (err) {
+      toast.error((err as Error)?.message || 'อัปโหลด Avatar ไม่สำเร็จ');
+      throw err;
+    }
+  }, [authUser, setAuthUser]);
+
+  const handleDeleteAvatarUser = useCallback(async (id: string) => {
+    try {
+      await deleteAvatar(id);
+      setUsers((prev) => prev.map((u) => u.id === id ? { ...u, avatarUrl: null } : u));
+      if (authUser?.id === id) setAuthUser({ ...authUser, avatarUrl: null });
+    } catch (err) {
+      toast.error((err as Error)?.message || 'ลบ Avatar ไม่สำเร็จ');
+      throw err;
+    }
+  }, [authUser, setAuthUser]);
+
+  const handleDeleteUser = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteUser(deleteTarget.id);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      toast.success(`ลบ ${deleteTarget.firstName} ${deleteTarget.lastName} สำเร็จ`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error((err as Error)?.message || 'ลบผู้ใช้ไม่สำเร็จ');
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteTarget]);
+
+  const handleInviteUser = useCallback(async (input: InviteUserInput) => {
+    const { branchId: _branchId, ...body } = input;
+    const avatarUrl =
+      body.avatarUrl &&
+      !body.avatarUrl.startsWith('blob:') &&
+      /^https?:\/\//.test(body.avatarUrl)
+        ? body.avatarUrl
+        : undefined;
+
+    try {
+      await createUser({ ...body, avatarUrl });
+      await loadUsers();
+      toast.success(`เชิญ ${input.firstName} ${input.lastName} สำเร็จ`);
+    } catch (err) {
+      toast.error((err as Error)?.message || 'สร้างผู้ใช้ไม่สำเร็จ');
+      throw err;
+    }
+  }, [loadUsers]);
+
   // Dynamic filter options derived from full dataset
   const roles = useMemo(() => {
-    const unique = Array.from(new Set(users.map((u) => u.role)));
+    const unique = Array.from(new Set(users.map((u) => u.role.code)));
     return ["All", ...unique];
   }, [users]);
 
@@ -174,16 +264,16 @@ export default function UsersPage() {
         (u.nickname?.toLowerCase().includes(q) ?? false);
       return (
         matchSearch &&
-        (roleFilter === "All" || u.role === roleFilter) &&
+        (roleFilter === "All" || u.role.code === roleFilter) &&
         (deptFilter === "All" || u.department === deptFilter)
       );
     });
   }, [users, search, roleFilter, deptFilter]);
 
-  // Reset page when filters change
   const handleSearch     = (v: string) => { setSearch(v);     setPage(1); };
   const handleRoleFilter = (v: string) => { setRoleFilter(v); setPage(1); };
   const handleDeptFilter = (v: string) => { setDeptFilter(v); setPage(1); };
+
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged      = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -191,9 +281,18 @@ export default function UsersPage() {
   const stats = useMemo(() => ({
     total:    users.length,
     active:   users.filter((u) => u.status === "ACTIVE").length,
-    admins:   users.filter((u) => ["SYSTEM", "SUPER_ADMIN", "ADMIN"].includes(u.role)).length,
+    admins:   users.filter((u) => ["SYSTEM", "SUPER_ADMIN", "ADMIN"].includes(u.role.code)).length,
     branches: new Set(users.map((u) => u.branch)).size,
   }), [users]);
+
+  if (!hasView) {
+    return (
+      <div className="page-shell flex flex-col items-center justify-center gap-3 py-32 text-center">
+        <Shield className="h-10 w-10 text-muted-foreground/40" />
+        <p className="text-sm font-medium text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+      </div>
+    );
+  }
 
   return (
     <div className="page-shell">
@@ -203,11 +302,13 @@ export default function UsersPage() {
         title="User Management"
         subtitle="Manage workspace members, roles & permissions"
         actions={
-          <Button variant="create" size="lg" onClick={() => setDrawerOpen(true)}>
-            <UserPlus />
-            <span className="hidden sm:inline">Invite User</span>
-            <span className="sm:hidden">Invite</span>
-          </Button>
+          hasCreate && (
+            <Button variant="create" size="lg" onClick={() => setDrawerOpen(true)}>
+              <UserPlus />
+              <span className="hidden sm:inline">Invite User</span>
+              <span className="sm:hidden">Invite</span>
+            </Button>
+          )
         }
       />
 
@@ -401,8 +502,8 @@ export default function UsersPage() {
                                   </TableCell>
                                   <TableCell className="pr-3 sm:pr-4">
                                     <ActionMenu actions={[
-                                      { label: "Edit User", icon: Pencil, onClick: () => {} },
-                                      { label: "Delete", icon: Trash2, destructive: true, onClick: () => {} },
+                                      ...(hasUpdate ? [{ label: "Edit User", icon: Pencil, onClick: () => setEditUser(user) }] : []),
+                                      ...(hasDelete ? [{ label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteTarget(user) }] : []),
                                     ]} />
                                   </TableCell>
                                 </MotionTableRow>
@@ -475,8 +576,8 @@ export default function UsersPage() {
                                       className="drop-shadow-md"
                                     />
                                     <ActionMenu actions={[
-                                      { label: "Edit User", icon: Pencil, onClick: () => {} },
-                                      { label: "Delete", icon: Trash2, destructive: true, onClick: () => {} },
+                                      ...(hasUpdate ? [{ label: "Edit User", icon: Pencil, onClick: () => setEditUser(user) }] : []),
+                                      ...(hasDelete ? [{ label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteTarget(user) }] : []),
                                     ]} />
                                   </div>
                                   <p className="text-sm font-semibold leading-tight">
@@ -539,8 +640,95 @@ export default function UsersPage() {
         </AnimatePresence>
       </motion.div>
 
-      {/* ── Modal ── */}
-      <UserModal open={drawerOpen} onClose={() => setDrawerOpen(false)} roles={roleOptions} branches={branchOptions} departments={departmentOptions} positions={positionOptions} />
+      {/* ── Create Modal ── */}
+      <UserModal
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSubmit={handleInviteUser}
+        roles={roleOptions}
+        branches={branchOptions}
+        departments={departmentOptions}
+        positions={positionOptions}
+      />
+
+      {/* ── Edit Modal ── */}
+      <EditUserModal
+        key={editUser?.id ?? 'none'}
+        open={editUser !== null}
+        user={editUser}
+        onClose={() => setEditUser(null)}
+        onSubmit={handleUpdateUser}
+        onUploadAvatar={handleUploadAvatar}
+        onDeleteAvatar={handleDeleteAvatarUser}
+        roles={roleOptions}
+        departments={departmentOptions}
+        positions={positionOptions}
+      />
+
+      {/* ── Delete Confirm ── */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <motion.div
+              key="del-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              onClick={() => !deleting && setDeleteTarget(null)}
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                key="del-modal"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="w-full max-w-sm overflow-hidden rounded-2xl bg-card shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="h-1 w-full bg-linear-to-r from-rose-500 to-red-600" />
+                <div className="px-6 py-5">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <h2 className="text-[14px] font-bold">Delete User</h2>
+                  </div>
+                  <p className="text-[13px] text-muted-foreground">
+                    ลบ <span className="font-semibold text-foreground">{deleteTarget.firstName} {deleteTarget.lastName}</span> ({deleteTarget.employeeId}) ออกจากระบบ? การกระทำนี้ไม่สามารถยกเลิกได้
+                  </p>
+                </div>
+                <div className="flex gap-3 border-t border-border/60 px-6 py-4">
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={() => setDeleteTarget(null)}
+                    className="flex-1 cursor-pointer rounded-xl border border-border px-4 py-2.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={handleDeleteUser}
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-[13px] font-semibold text-white transition-all hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {deleting ? (
+                      <>
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Deleting…
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

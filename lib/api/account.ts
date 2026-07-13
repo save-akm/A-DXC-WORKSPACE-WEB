@@ -1,6 +1,7 @@
-import { authConfig } from '@/lib/auth/config';
 import { AuthApiError } from '@/lib/auth/api';
 import type { AuthUser } from '@/lib/auth/types';
+
+const PROXY = '/api/_proxy';
 
 interface ApiEnvelope<T> {
   status: string;
@@ -62,20 +63,20 @@ async function unwrap<T>(res: Response): Promise<T> {
 }
 
 const endpoints = {
-  updateMe: '/me',
-  uploadAvatar: '/me/avatar',
-  deleteAvatar: '/me/avatar',
+  updateMe: '/auth/me',
+  uploadAvatar: '/auth/me/avatar',
+  deleteAvatar: '/auth/me/avatar',
 } as const;
 
 export type UpdateMeBody = Partial<
-  Pick<AuthUser, 'firstName' | 'lastName' | 'nickname' | 'email' | 'phone' | 'avatarUrl'>
+  Pick<AuthUser, 'firstName' | 'lastName' | 'nickname' | 'email' | 'phone' | 'avatarUrl' | 'commuteMinutes' | 'locale' | 'timezone'>
 >;
 
 export async function updateMeRequest(
   accessToken: string,
   body: UpdateMeBody,
 ): Promise<AuthUser> {
-  const res = await fetch(authConfig.apiUrl + endpoints.updateMe, {
+  const res = await fetch(PROXY + endpoints.updateMe, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -84,31 +85,32 @@ export async function updateMeRequest(
     body: JSON.stringify(body),
     cache: 'no-store',
   });
-  return unwrap<AuthUser>(res);
+  const data = await unwrap<{ user: AuthUser }>(res);
+  return data.user;
 }
 
 export async function uploadAvatarRequest(
   accessToken: string,
   file: File,
-): Promise<{ avatarUrl: string }> {
+): Promise<{ user: AuthUser }> {
   const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(authConfig.apiUrl + endpoints.uploadAvatar, {
+  form.append('avatar', file);
+  const res = await fetch(PROXY + endpoints.uploadAvatar, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
     body: form,
     cache: 'no-store',
   });
-  return unwrap<{ avatarUrl: string }>(res);
+  return unwrap<{ user: AuthUser }>(res);
 }
 
 export async function deleteAvatarRequest(
   accessToken: string,
-): Promise<{ avatarUrl: null }> {
-  const res = await fetch(authConfig.apiUrl + endpoints.deleteAvatar, {
+): Promise<{ ok: boolean }> {
+  const res = await fetch(PROXY + endpoints.deleteAvatar, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: 'no-store',
   });
-  return unwrap<{ avatarUrl: null }>(res);
+  return unwrap<{ ok: boolean }>(res);
 }

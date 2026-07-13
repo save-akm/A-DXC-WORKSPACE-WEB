@@ -1,5 +1,5 @@
 import { authConfig } from './config';
-import type { AuthUser, LoginResponse, MenuNode, RefreshResponse } from './types';
+import type { AuthTokens, AuthUser, LoginResponse, MenuNode, RefreshResponse } from './types';
 
 export class AuthApiError extends Error {
   status: number;
@@ -88,11 +88,26 @@ async function request<T>(
   return parsed as T;
 }
 
+export interface VerifyTwoFactorResponse extends AuthTokens {
+  mustChangePassword: boolean;
+}
+
 export function loginRequest(identifier: string, password: string, rememberMe: boolean, userAgent?: string) {
   return request<LoginResponse>(authConfig.endpoints.login, {
     method: 'POST',
     body: { identifier, password, rememberMe },
     userAgent,
+  });
+}
+
+export function verify2FARequest(body: {
+  twoFactorToken: string;
+  pin: string;
+  rememberMe: boolean;
+}) {
+  return request<VerifyTwoFactorResponse>(authConfig.endpoints.verify2fa, {
+    method: 'POST',
+    body,
   });
 }
 
@@ -121,8 +136,8 @@ export function menuRequest(accessToken: string): Promise<MenuNode[]> {
   return request<MenuNode[]>(authConfig.endpoints.menus, { accessToken });
 }
 
-export function updatePasswordRequest(accessToken: string, newPassword: string): Promise<void> {
-  return request<void>(authConfig.endpoints.updatePassword, {
+export function updatePasswordRequest(accessToken: string, newPassword: string): Promise<AuthTokens> {
+  return request<AuthTokens>(authConfig.endpoints.updatePassword, {
     method: 'POST',
     accessToken,
     body: { newPassword },

@@ -5,6 +5,7 @@ export const authConfig = {
     refresh: '/auth/refresh',
     logout: '/auth/logout',
     me: '/auth/me',
+    verify2fa: '/auth/2fa/verify',
     menus: '/menus/my',
     updatePassword: '/auth/update-password',
     forgotPassword: '/auth/forgot-password',

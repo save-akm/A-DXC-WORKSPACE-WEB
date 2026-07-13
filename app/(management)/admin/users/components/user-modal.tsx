@@ -46,7 +46,22 @@ type FormValues = z.infer<typeof schema>;
 // ── Public types ─────────────────────────────────────────────────────────────
 
 export interface SelectOption    { id: string; name: string }
-export interface DepartmentOption extends SelectOption { deptId: string }
+export interface DepartmentOption {
+  id: string;
+  name: string;
+  deptId: string;
+  /** Parent department code — used when options are flattened to units */
+  deptCode: string;
+  /** Present when this option represents a department unit */
+  unitCode?: string;
+}
+
+const ADXC_DEPT_CODE = 'A-DXC';
+
+function isAdxcDepartment(option: DepartmentOption | undefined): boolean {
+  if (!option) return false;
+  return option.deptCode === ADXC_DEPT_CODE || option.unitCode === ADXC_DEPT_CODE;
+}
 
 export interface InviteUserInput extends FormValues {
   avatarUrl?: string;
@@ -91,7 +106,15 @@ export function UserModal({
     },
   });
 
+  const departmentId = form.watch('departmentId');
+  const selectedDepartment = departments.find((d) => d.id === departmentId);
+  const showCommute = isAdxcDepartment(selectedDepartment);
+
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (!showCommute) setCommute('');
+  }, [showCommute]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,17 +147,17 @@ export function UserModal({
 
   async function onValid(values: FormValues) {
     setSaving(true);
-    const dept = departments.find((d) => d.id === values.departmentId);
+    const selected = departments.find((d) => d.id === values.departmentId);
     try {
       await onSubmit?.({
         ...values,
-        departmentId:     dept?.deptId ?? values.departmentId,
-        departmentUnitId: dept && dept.id !== dept.deptId ? dept.id : undefined,
+        departmentId:     selected?.deptId ?? values.departmentId,
+        departmentUnitId: selected && selected.id !== selected.deptId ? selected.id : undefined,
         nickname:         values.nickname   || undefined,
         phone:            values.phone      || undefined,
         positionId:       values.positionId || undefined,
         avatarUrl:        customPreview ?? (selectedPreset ? `/avatars/${selectedPreset}` : undefined),
-        commuteMinutes:   commuteMinutes ? parseInt(commuteMinutes, 10) : undefined,
+        commuteMinutes:   showCommute && commuteMinutes ? parseInt(commuteMinutes, 10) : undefined,
       });
       onClose();
     } finally {
@@ -322,17 +345,18 @@ export function UserModal({
                         )} />
 
 
-                        {/* commuteMinutes: plain state, not in zod schema */}
-                        <FormItem>
-                          <FormLabel>Commute (min)</FormLabel>
-                          <Input
-                            type="number"
-                            min={0}
-                            placeholder="e.g. 30"
-                            value={commuteMinutes}
-                            onChange={(e) => setCommute(e.target.value)}
-                          />
-                        </FormItem>
+                        {showCommute && (
+                          <FormItem>
+                            <FormLabel>Commute (min)</FormLabel>
+                            <Input
+                              type="number"
+                              min={0}
+                              placeholder="e.g. 30"
+                              value={commuteMinutes}
+                              onChange={(e) => setCommute(e.target.value)}
+                            />
+                          </FormItem>
+                        )}
 
                       </div>
                     </div>

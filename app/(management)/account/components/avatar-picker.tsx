@@ -38,6 +38,10 @@ interface AvatarPickerProps {
   customPreview: string | null;
   onUpload: (file: File) => void;
   onClearCustom: () => void;
+  /** Current saved avatar URL from the server (shown in upload tile when no local preview). */
+  currentAvatarUrl?: string | null;
+  /** Called when user wants to delete the saved avatar. */
+  onDeleteAvatar?: () => void;
 }
 
 const tileSize = 'h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36';
@@ -48,6 +52,8 @@ export function AvatarPicker({
   customPreview,
   onUpload,
   onClearCustom,
+  currentAvatarUrl,
+  onDeleteAvatar,
 }: AvatarPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -88,6 +94,7 @@ export function AvatarPicker({
   }, []);
 
   const customSelected = !!customPreview;
+  const showSavedAvatar = !customSelected && !!currentAvatarUrl && !selectedPreset;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,24 +130,24 @@ export function AvatarPicker({
             dragTransition={{ bounceStiffness: 600, bounceDamping: 40 }}
             whileTap={{ cursor: 'grabbing' }}
             style={{ x }}
-            className="flex w-max cursor-grab gap-3 active:cursor-grabbing sm:gap-4 md:gap-5"
+            className="flex w-max cursor-grab gap-3 px-4 py-1 active:cursor-grabbing sm:gap-4 md:gap-5"
           >
             {/* Upload tile */}
             <div
               className={cn(
                 'group relative flex-shrink-0 overflow-hidden rounded-2xl transition-all duration-200',
                 tileSize,
-                customSelected
+                customSelected || showSavedAvatar
                   ? 'scale-[1.06] border-4 border-sky-500 ring-4 ring-sky-400/50 ring-offset-2 shadow-xl shadow-sky-500/30'
                   : 'border-4 border-dashed border-muted-foreground/30 hover:border-muted-foreground/60',
               )}
             >
-              {customSelected ? (
+              {customSelected || showSavedAvatar ? (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={customPreview ?? ''}
-                    alt="Custom avatar preview"
+                    src={customSelected ? (customPreview ?? '') : (currentAvatarUrl ?? '')}
+                    alt="Avatar preview"
                     className="h-full w-full object-cover"
                     draggable={false}
                   />
@@ -150,7 +157,7 @@ export function AvatarPicker({
                       variant="secondary"
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="shadow-lg"
+                      className="shadow-lg leading-none"
                     >
                       <Upload className="size-3" />
                       เปลี่ยน
@@ -159,14 +166,14 @@ export function AvatarPicker({
                       size="xs"
                       variant="destructive"
                       type="button"
-                      onClick={onClearCustom}
-                      className="shadow-lg"
+                      onClick={customSelected ? onClearCustom : onDeleteAvatar}
+                      className="shadow-lg leading-none bg-red-500 text-white hover:bg-red-600 border-transparent"
                     >
                       <Trash2 className="size-3" />
                       ลบ
                     </Button>
                   </div>
-                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white shadow-md ring-2 ring-white/80">
+                  <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white shadow-md ring-2 ring-white/80 transition-opacity group-hover:opacity-0">
                     <Check className="size-3 stroke-3" />
                   </div>
                 </>

@@ -31,6 +31,7 @@ export function UserPermissionsTab() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState<Map<DirtyKey, DirtyEntry>>(new Map());
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const [pendingMenuId, setPendingMenuId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,9 +94,23 @@ export function UserPermissionsTab() {
   const handleMenuChange = useCallback(
     (menuId: string) => {
       if (dirty.size > 0) {
-        const ok = window.confirm('มีการเปลี่ยนแปลงที่ยังไม่บันทึก ต้องการออกไหม?');
-        if (!ok) return;
-        setDirty(new Map());
+        setPendingMenuId(menuId);
+        setShowMenuDropdown(false);
+        toast.warning('มีการเปลี่ยนแปลงที่ยังไม่บันทึก', {
+          description: 'ต้องการออกโดยไม่บันทึกไหม?',
+          duration: 8000,
+          action: {
+            label: 'ออกเลย',
+            onClick: () => {
+              setDirty(new Map());
+              setPendingMenuId((id) => {
+                if (id) setSelectedMenuId(id);
+                return null;
+              });
+            },
+          },
+        });
+        return;
       }
       setSelectedMenuId(menuId);
       setShowMenuDropdown(false);
@@ -178,7 +193,7 @@ export function UserPermissionsTab() {
       </div>
 
       {/* User section card */}
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
+      <div className="rounded-xl border border-border/60 bg-card shadow-sm">
         {/* Header with menu dropdown */}
         <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-5 py-3.5">
           <div className="flex items-center gap-3">
@@ -206,7 +221,7 @@ export function UserPermissionsTab() {
               </button>
             </div>
             {showMenuDropdown && (
-              <div className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-popover shadow-lg">
+              <div className="absolute right-0 top-full z-20 mt-1 w-48 max-h-64 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
                 {menus.map((menu) => (
                   <button
                     key={menu.id}
@@ -215,7 +230,7 @@ export function UserPermissionsTab() {
                     className={`w-full px-4 py-2.5 text-left text-[12px] transition-colors cursor-pointer ${
                       menu.id === selectedMenuId
                         ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                        : 'text-foreground hover:bg-muted/50'
+                        : 'text-foreground hover:bg-indigo-500/8 hover:text-indigo-600 dark:hover:text-indigo-400'
                     }`}
                   >
                     {menu.name}

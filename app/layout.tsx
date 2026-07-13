@@ -7,6 +7,7 @@ import { ThemePresetProvider } from "@/components/theme-preset-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { SocketProvider } from "@/components/socket";
 import { ToastProvider } from "@/components/ui/toast";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "A-DXC Workspace",
@@ -37,9 +38,11 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ThemePresetProvider>
-              <AuthProvider>
-                <SocketProvider>{children}</SocketProvider>
-              </AuthProvider>
+              <TooltipProvider delayDuration={300}>
+                <AuthProvider>
+                  <SocketProvider>{children}</SocketProvider>
+                </AuthProvider>
+              </TooltipProvider>
               <ToastProvider />
             </ThemePresetProvider>
           </ThemeProvider>

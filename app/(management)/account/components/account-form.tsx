@@ -1,16 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   AtSign,
-  IdCard,
   Phone,
   Save,
   Smile,
-  Sparkles,
+  Timer,
   User as UserIcon,
   UserCircle2,
   UserSquare2,
@@ -27,10 +26,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { toast } from '@/components/ui/toast';
 import {
   uploadAvatarRequest,
+  deleteAvatarRequest,
   updateMeRequest,
   type UpdateMeBody,
 } from '@/lib/api/account';
@@ -40,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { AvatarPicker } from './avatar-picker';
 
 const PRESET_PREFIX = '/avatars/';
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 /* ─── Schema ─────────────────────────────────────────────────────────── */
 
@@ -58,6 +58,10 @@ const accountSchema = z.object({
     .refine((v) => v === '' || /^[\d\s+()-]{6,}$/.test(v), {
       message: 'รูปแบบเบอร์โทรไม่ถูกต้อง',
     }),
+  commuteMinutes: z.string().refine(
+    (v) => v === '' || (/^\d+$/.test(v) && parseInt(v, 10) >= 0),
+    { message: 'กรอกเป็นตัวเลขนาที (0 ขึ้นไป)' },
+  ),
 });
 
 type AccountFormValues = z.infer<typeof accountSchema>;
@@ -69,6 +73,7 @@ function toDefaults(user: AuthUser): AccountFormValues {
     nickname: user.nickname ?? '',
     email: user.email ?? '',
     phone: user.phone ?? '',
+    commuteMinutes: user.commuteMinutes != null ? String(user.commuteMinutes) : '',
   };
 }
 
@@ -78,7 +83,6 @@ function parsePresetFromAvatarUrl(url: string | null | undefined): string | null
   return null;
 }
 
-const fallbackColor = 'bg-gradient-to-br from-rose-400 to-fuchsia-500';
 
 export function AccountForm({ user }: { user: AuthUser }) {
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -103,6 +107,7 @@ export function AccountForm({ user }: { user: AuthUser }) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(initialPreset);
   const [customFile, setCustomFile] = useState<File | null>(null);
   const [customPreview, setCustomPreview] = useState<string | null>(null);
+  const [deleteAvatar, setDeleteAvatar] = useState(false);
 
   // resync when user from store changes (e.g. after save).
   // Deps include only the primitive fields we care about — `form` itself is
@@ -111,6 +116,7 @@ export function AccountForm({ user }: { user: AuthUser }) {
     form.reset(toDefaults(user));
     setSelectedPreset(parsePresetFromAvatarUrl(user.avatarUrl));
     setCustomFile(null);
+    setDeleteAvatar(false);
     setCustomPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -124,6 +130,7 @@ export function AccountForm({ user }: { user: AuthUser }) {
     user.email,
     user.phone,
     user.avatarUrl,
+    user.commuteMinutes,
   ]);
 
   // revoke object URL on unmount
@@ -135,6 +142,10 @@ export function AccountForm({ user }: { user: AuthUser }) {
   }, []);
 
   const handleUpload = (file: File) => {
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('ไฟล์ใหญ่เกินไป', { description: `ขนาดสูงสุด 5 MB (ไฟล์นี้ ${(file.size / 1024 / 1024).toFixed(1)} MB)` });
+      return;
+    }
     if (customPreview) URL.revokeObjectURL(customPreview);
     setCustomFile(file);
     setCustomPreview(URL.createObjectURL(file));
@@ -152,26 +163,23 @@ export function AccountForm({ user }: { user: AuthUser }) {
     setCustomFile(null);
     setCustomPreview(null);
     setSelectedPreset(filename);
+    setDeleteAvatar(false);
   };
 
-  // live preview values — useWatch scopes the subscription to this component
-  // only, instead of re-rendering on every internal RHF state change.
-  const watched = useWatch({ control: form.control });
+  const handleDeleteAvatar = () => {
+    handleClearCustom();
+    setSelectedPreset(null);
+    setDeleteAvatar(true);
+  };
+
   const presetChanged = selectedPreset !== initialPreset;
   const hasCustom = !!customFile;
-  const isDirty = form.formState.isDirty || presetChanged || hasCustom;
-
-  const previewAvatarUrl = customPreview
-    ? customPreview
-    : selectedPreset
-      ? `${PRESET_PREFIX}${selectedPreset}`
-      : user.avatarUrl;
-
-  const initialLetter = (user.firstName?.[0] ?? user.email?.[0] ?? '?').toUpperCase();
+  const isDirty = form.formState.isDirty || presetChanged || hasCustom || deleteAvatar;
 
   const handleReset = () => {
     form.reset(defaults);
     setSelectedPreset(initialPreset);
+    setDeleteAvatar(false);
     handleClearCustom();
   };
 
@@ -187,12 +195,21 @@ export function AccountForm({ user }: { user: AuthUser }) {
     const dirtyFields = form.formState.dirtyFields;
 
     const work = (async () => {
-      let newAvatarUrl: string | null | undefined = undefined;
-      if (customFile) {
+      let uploadedUser: AuthUser | undefined = undefined;
+
+      if (deleteAvatar) {
+        await deleteAvatarRequest(accessToken);
+      } else if (customFile) {
         const res = await uploadAvatarRequest(accessToken, customFile);
-        newAvatarUrl = res.avatarUrl;
-      } else if (presetChanged) {
-        newAvatarUrl = selectedPreset ? `${PRESET_PREFIX}${selectedPreset}` : null;
+        uploadedUser = res.user;
+      } else if (presetChanged && selectedPreset) {
+        const blob = await fetch(`/avatars/${selectedPreset}`).then((r) => r.blob());
+        if (blob.size > MAX_AVATAR_BYTES) {
+          throw new Error(`ไฟล์ avatar นี้ใหญ่เกิน 5 MB (${(blob.size / 1024 / 1024).toFixed(1)} MB)`);
+        }
+        const file = new File([blob], selectedPreset, { type: blob.type });
+        const res = await uploadAvatarRequest(accessToken, file);
+        uploadedUser = res.user;
       }
 
       const body: UpdateMeBody = {
@@ -203,22 +220,24 @@ export function AccountForm({ user }: { user: AuthUser }) {
           : {}),
         ...(dirtyFields.email ? { email: values.email } : {}),
         ...(dirtyFields.phone ? { phone: values.phone.trim() || null } : {}),
-        ...(newAvatarUrl !== undefined && !customFile ? { avatarUrl: newAvatarUrl } : {}),
+        ...(dirtyFields.commuteMinutes
+          ? { commuteMinutes: values.commuteMinutes.trim() ? parseInt(values.commuteMinutes, 10) : null }
+          : {}),
+        locale: user.locale ?? 'th-TH',
+        timezone: user.timezone ?? 'Asia/Bangkok',
       };
 
       const hasTextChanges = Object.keys(body).length > 0;
-      let updated: AuthUser = user;
+      let patchedUser: AuthUser | undefined = undefined;
       if (hasTextChanges) {
-        updated = await updateMeRequest(accessToken, body);
+        patchedUser = await updateMeRequest(accessToken, body);
       }
-
-      const finalAvatarUrl =
-        customFile && newAvatarUrl !== undefined ? newAvatarUrl : updated.avatarUrl;
 
       const merged: AuthUser = {
         ...user,
-        ...updated,
-        avatarUrl: finalAvatarUrl ?? null,
+        ...(uploadedUser ?? {}),
+        ...(patchedUser ?? {}),
+        ...(deleteAvatar ? { avatarUrl: null } : {}),
       };
       setUser(merged);
       return merged;
@@ -242,82 +261,14 @@ export function AccountForm({ user }: { user: AuthUser }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 2xl:space-y-6">
-        {/* Hero preview */}
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-violet-500/10 via-fuchsia-500/10 to-amber-500/10 p-5 shadow-lg shadow-black/5 ring-1 ring-inset ring-white/10 backdrop-blur-md dark:ring-white/5 sm:p-6">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -right-10 -top-12 size-48 rounded-full bg-fuchsia-500/20 blur-3xl"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -bottom-16 -left-10 size-44 rounded-full bg-sky-500/20 blur-3xl"
-          />
-        <span
-            aria-hidden
-            className="pointer-events-none absolute right-6 top-6"
-          >
-            <Sparkles
-              className="
-                size-7
-                animate-pulse
-                text-rose-500
-                drop-shadow-[0_0_8px_rgba(251,113,133,0.55)]
-                brightness-110
-              "
-            />
-
-            <span
-              className="
-                absolute inset-0
-                animate-ping
-                rounded-full
-                bg-rose-300/25
-                blur-md
-              "
-            />
-          </span>
-
-          <div className="relative flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
-            <div className="rounded-full p-1 ring-2 ring-background/60 shadow-xl shadow-fuchsia-500/10">
-              <UserAvatar
-                avatarUrl={previewAvatarUrl ?? null}
-                initial={initialLetter}
-                color={fallbackColor}
-                size="xl"
-                showStatus
-                statusRingClass="bg-background"
-              />
-            </div>
-            <div className="min-w-0 flex-1 text-center sm:text-left">
-              <div className="truncate text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
-                {`${watched.firstName ?? ''} ${watched.lastName ?? ''}`.trim() || 'ผู้ใช้'}
-                {watched.nickname ? (
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">
-                    ({watched.nickname})
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-0.5 truncate text-sm text-muted-foreground">
-                {watched.email || '—'}
-              </div>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-0.5 text-[11px] backdrop-blur">
-                <IdCard className="size-3 text-violet-500" />
-                <span className="text-muted-foreground">รหัสพนักงาน:</span>
-                <span className="font-mono font-medium text-foreground">
-                  {user.employeeId}
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Avatar + Personal info — side by side */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 2xl:gap-6">
+        <div className="grid grid-cols-1 gap-3 2xl:grid-cols-2 2xl:gap-4">
         <Section
           tone="pink"
           icon={UserCircle2}
           title="รูปประจำตัว"
           subtitle="เลือกจาก preset หรืออัพโหลดเอง — ระบบจะตั้งชื่อไฟล์เป็นรหัสพนักงานให้อัตโนมัติ"
+          centerContent
         >
           <AvatarPicker
             selectedPreset={selectedPreset}
@@ -325,6 +276,8 @@ export function AccountForm({ user }: { user: AuthUser }) {
             customPreview={customPreview}
             onUpload={handleUpload}
             onClearCustom={handleClearCustom}
+            currentAvatarUrl={deleteAvatar ? null : user.avatarUrl}
+            onDeleteAvatar={handleDeleteAvatar}
           />
         </Section>
 
@@ -413,7 +366,7 @@ export function AccountForm({ user }: { user: AuthUser }) {
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="sm:col-span-2">
+                <FormItem>
                   <FormLabel className="text-xs text-foreground/70">
                     อีเมล <span className="text-destructive">*</span>
                   </FormLabel>
@@ -431,6 +384,32 @@ export function AccountForm({ user }: { user: AuthUser }) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="commuteMinutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs text-foreground/70">ระยะเวลาเดินทาง</FormLabel>
+                  <FieldShell icon={Timer}>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        {...field}
+                        className="h-10 pl-9 pr-14"
+                      />
+                    </FormControl>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                      นาที
+                    </span>
+                  </FieldShell>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
           </div>
         </Section>
         </div>
@@ -524,9 +503,10 @@ interface SectionProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  centerContent?: boolean;
 }
 
-function Section({ tone, icon: Icon, title, subtitle, children }: SectionProps) {
+function Section({ tone, icon: Icon, title, subtitle, children, centerContent }: SectionProps) {
   const t = toneStyles[tone];
   return (
     <section
@@ -535,6 +515,7 @@ function Section({ tone, icon: Icon, title, subtitle, children }: SectionProps) 
         'ring-1 ring-inset ring-white/10 dark:ring-white/5',
         'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r',
         t.ring,
+        centerContent && 'flex flex-col',
       )}
     >
       <span
@@ -560,7 +541,7 @@ function Section({ tone, icon: Icon, title, subtitle, children }: SectionProps) 
           ) : null}
         </div>
       </div>
-      <div className="relative">{children}</div>
+      <div className={cn('relative', centerContent && 'flex flex-1 items-center')}>{children}</div>
     </section>
   );
 }

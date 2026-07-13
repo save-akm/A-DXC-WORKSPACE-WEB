@@ -377,8 +377,10 @@
     @apply font-sans;
     /* hide blinking text caret globally */
     caret-color: transparent;
-    /* reserve scrollbar space to prevent layout shift when dropdowns open */
-    scrollbar-gutter: stable;
+    /* NOTE: no scrollbar-gutter here. The management shell never scrolls at the
+       <html> level (it's h-svh + overflow-hidden and scrolls inside <main>),
+       so reserving a gutter here only pushed the whole app ~15px off the right
+       edge. Each real scroll container reserves its own gutter instead. */
   }
   /* re-enable caret only on real editable fields */
   input,
@@ -441,7 +443,7 @@
 @layer components {
   /* Page scaffold: 8px-grid padding + section rhythm (16→24px pad, 24→32px gap). */
   .page-shell {
-    @apply flex flex-col gap-6 p-4 sm:gap-8 sm:p-6;
+    @apply flex flex-col gap-4 p-4 sm:gap-6 sm:p-6 2xl:gap-8;
   }
 
   /* Typographic roles — one source of truth for the dashboard hierarchy. */
@@ -563,6 +565,11 @@
   from { transform: translateX(-50%); }
   to { transform: translateX(0); }
 }
+/* Force all Radix floating popper wrappers above every sticky/fixed element */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
 @layer utilities {
   .animate-marquee-left {
     animation: marquee-left 40s linear infinite;
@@ -572,4 +579,118 @@
     animation: marquee-right 40s linear infinite;
     will-change: transform;
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Blog code blocks — syntax highlighting (rehype-highlight / highlight.js).
+   Deliberately dark in both light and dark UI, like most docs sites, so code
+   reads consistently. Palette is a Tokyo-Night-style token set.
+   ────────────────────────────────────────────────────────────────────────── */
+.blog-code {
+  background: #1a1b26;
+}
+.blog-code pre,
+.blog-code code {
+  background: transparent;
+  color: #a9b1d6;
+}
+.blog-code .hljs-comment,
+.blog-code .hljs-quote {
+  color: #565f89;
+  font-style: italic;
+}
+.blog-code .hljs-keyword,
+.blog-code .hljs-selector-tag,
+.blog-code .hljs-literal,
+.blog-code .hljs-section,
+.blog-code .hljs-doctag,
+.blog-code .hljs-type,
+.blog-code .hljs-meta .hljs-keyword {
+  color: #bb9af7;
+}
+.blog-code .hljs-string,
+.blog-code .hljs-regexp,
+.blog-code .hljs-addition {
+  color: #9ece6a;
+}
+.blog-code .hljs-number,
+.blog-code .hljs-symbol,
+.blog-code .hljs-bullet {
+  color: #ff9e64;
+}
+.blog-code .hljs-title,
+.blog-code .hljs-title.function_,
+.blog-code .hljs-built_in,
+.blog-code .hljs-function .hljs-title {
+  color: #7aa2f7;
+}
+.blog-code .hljs-tag,
+.blog-code .hljs-name,
+.blog-code .hljs-selector-id,
+.blog-code .hljs-selector-class,
+.blog-code .hljs-deletion {
+  color: #f7768e;
+}
+.blog-code .hljs-attr,
+.blog-code .hljs-attribute,
+.blog-code .hljs-variable,
+.blog-code .hljs-template-variable,
+.blog-code .hljs-property {
+  color: #7dcfff;
+}
+.blog-code .hljs-params,
+.blog-code .hljs-punctuation {
+  color: #c0caf5;
+}
+.blog-code .hljs-meta {
+  color: #7aa2f7;
+}
+.blog-code .hljs-emphasis { font-style: italic; }
+.blog-code .hljs-strong { font-weight: 600; }
+
+/* ── Blog inline text-color classes (used via toolbar color picker) ──────── */
+.tc-red    { color: #ef4444; }
+.tc-orange { color: #f97316; }
+.tc-amber  { color: #f59e0b; }
+.tc-green  { color: #10b981; }
+.tc-blue   { color: #3b82f6; }
+.tc-violet { color: #7c3aed; }
+.tc-pink   { color: #ec4899; }
+.tc-muted  { color: #94a3b8; }
+
+/* ── Blog tag chips ──────────────────────────────────────────────────────────
+   Tag colors are user data; tagChipStyle() (blog-meta.tsx) precomputes an
+   AA-readable text color per theme into these custom properties. Inline styles
+   can't react to .dark, so the theme switch happens here. */
+.tag-chip { color: var(--tag-chip-fg, inherit); }
+.dark .tag-chip { color: var(--tag-chip-fg-dark, var(--tag-chip-fg, inherit)); }
+
+/* ── Markdown editor syntax colors (CodeMirror) ──────────────────────────────
+   The editor sits on bg-card; these per-theme shades keep every token AA-
+   readable. Light defaults use -600/-700 stops; dark bumps to -400 so amber,
+   slate, and pink don't sink into the dark surface. Referenced from
+   markdown-editor.tsx via var(--cm-*). */
+:root {
+  --cm-heading: #7c3aed;   /* violet-600 */
+  --cm-heading-3: #6d28d9; /* violet-700 */
+  --cm-strong: #b45309;    /* amber-700 — was #d97706, too light on light */
+  --cm-em: #0284c7;        /* sky-600 */
+  --cm-link: #7c3aed;
+  --cm-url: #64748b;       /* slate-500 — was #94a3b8, under 4.5:1 */
+  --cm-mono: #db2777;      /* pink-600 */
+  --cm-meta: #64748b;
+  --cm-quote: #475569;     /* slate-600 */
+  --cm-list: #059669;      /* emerald-600 */
+}
+.dark {
+  --cm-heading: #a78bfa;   /* violet-400 */
+  --cm-heading-3: #a78bfa;
+  --cm-strong: #fbbf24;    /* amber-400 — readable on dark */
+  --cm-em: #38bdf8;        /* sky-400 */
+  --cm-link: #a78bfa;
+  --cm-url: #94a3b8;       /* slate-400 */
+  --cm-mono: #f472b6;      /* pink-400 */
+  --cm-meta: #94a3b8;
+  --cm-quote: #94a3b8;
+  --cm-list: #34d399;      /* emerald-400 */
 }

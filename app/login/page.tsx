@@ -21,6 +21,7 @@ import { loginAction } from '@/lib/auth/actions';
 import { toast } from '@/components/ui/toast';
 import { UpdatePasswordForm } from './update-password-form';
 import { ForgotPasswordForm } from './forgot-password-form';
+import { TwoFactorForm } from './two-factor-form';
 import type { LoginActionState, SessionData } from '@/lib/auth/types';
 
 const initialState: LoginActionState = { status: 'idle' };
@@ -48,8 +49,9 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [view, setView] = useState<'login' | 'update-password' | 'forgot-password'>('login');
+  const [view, setView] = useState<'login' | 'update-password' | 'forgot-password' | 'two-factor'>('login');
   const [pendingSession, setPendingSession] = useState<SessionData | null>(null);
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState<{ token: string; rememberMe: boolean } | null>(null);
 
   const resolveTarget = useCallback(() => {
     const next = searchParams.get('next');
@@ -57,6 +59,11 @@ export default function LoginPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (state.status === 'two-factor') {
+      setTwoFactorChallenge({ token: state.twoFactorToken, rememberMe: state.rememberMe });
+      setView('two-factor');
+      return;
+    }
     if (state.status !== 'success') return;
     if (state.data.mustChangePassword) {
       setPendingSession(state.data);
@@ -75,12 +82,12 @@ export default function LoginPage() {
     }
   }, [state, setSession, setMenus, router, resolveTarget]);
 
-  const handlePasswordUpdated = useCallback(() => {
+  const handlePasswordUpdated = useCallback((newAccessToken: string, newExpiresAt: number) => {
     if (!pendingSession) return;
     setSession({
       user: pendingSession.user,
-      accessToken: pendingSession.accessToken,
-      expiresAt: pendingSession.expiresAt,
+      accessToken: newAccessToken,
+      expiresAt: newExpiresAt,
     });
     setMenus(pendingSession.menus);
     router.push(resolveTarget());
@@ -92,6 +99,20 @@ export default function LoginPage() {
       description: 'กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่',
     });
   }, []);
+
+  const handleTwoFactorSuccess = useCallback((data: SessionData) => {
+    if (data.mustChangePassword) {
+      setPendingSession(data);
+      setView('update-password');
+      return;
+    }
+    setSession({ user: data.user, accessToken: data.accessToken, expiresAt: data.expiresAt });
+    setMenus(data.menus);
+    toast.success(`ยินดีต้อนรับกลับมา, ${data.user.firstName}!`, {
+      description: 'เข้าสู่ระบบ A-DXC WorkSpace Center สำเร็จ',
+    });
+    router.push(resolveTarget());
+  }, [setSession, setMenus, router, resolveTarget]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
@@ -304,8 +325,30 @@ export default function LoginPage() {
                 {pendingSession && (
                   <UpdatePasswordForm
                     accessToken={pendingSession.accessToken}
-                    refreshToken={pendingSession.pendingRefreshToken!}
                     onSuccess={handlePasswordUpdated}
+                  />
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ) : view === 'two-factor' ? (
+          <motion.div
+            key="two-factor"
+            initial={{ x: 80, opacity: 0, scale: 0.97 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
+            exit={{ x: -80, opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full max-w-md"
+          >
+            <div className={CARD_CLASS}>
+              {CARD_GLOW}
+              <div className="relative p-7 sm:p-9">
+                {twoFactorChallenge && (
+                  <TwoFactorForm
+                    twoFactorToken={twoFactorChallenge.token}
+                    rememberMe={twoFactorChallenge.rememberMe}
+                    onBack={() => setView('login')}
+                    onSuccess={handleTwoFactorSuccess}
                   />
                 )}
               </div>

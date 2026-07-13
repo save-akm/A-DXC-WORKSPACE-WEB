@@ -13,10 +13,8 @@ interface MenuBadgesState {
   clear: () => void;
 }
 
-// MOCK — wire socket.io later by calling setBadge(code, value) from listeners.
 // Keys must match the menu node `code` from /menus/my API response.
 const initialBadges: Record<string, BadgeValue> = {
-  inbox: 12,
   myissues: 3,
   projects: 8,
   project_survey: 2,

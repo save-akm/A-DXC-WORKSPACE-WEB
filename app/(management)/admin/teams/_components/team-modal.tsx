@@ -63,11 +63,14 @@ async function getCroppedImg(src: string, pixels: Area, outputSize = 512): Promi
 
 // ── Component ────────────────────────────────────────────────────────────────
 
+/** undefined = no change, Blob = new logo to upload, null = delete existing logo */
+export type LogoChange = Blob | null | undefined;
+
 interface TeamModalProps {
   open: boolean;
   team?: Team | null;
   onClose: () => void;
-  onSubmit: (input: CreateTeamInput) => Promise<void>;
+  onSubmit: (input: CreateTeamInput, logoChange: LogoChange) => Promise<void>;
 }
 
 type ModalView = 'form' | 'crop';
@@ -172,12 +175,30 @@ export function TeamModal({ open, team, onClose, onSubmit }: TeamModalProps) {
     if (!name.trim()) return;
     setSaving(true);
     try {
-      await onSubmit({
+      const input: CreateTeamInput = {
         name: name.trim(),
         description: description.trim() || undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
-        logoUrl: logoPreview ?? undefined,
-      });
+      };
+
+      // Determine logo change relative to the original team logo
+      const originalLogo = team?.logoUrl ?? null;
+      let logoChange: LogoChange;
+      if (logoPreview !== originalLogo) {
+        if (logoPreview === null) {
+          logoChange = null; // remove
+        } else if (logoPreview.startsWith('data:')) {
+          // Convert base64 data URL → Blob for multipart upload
+          const [header, data] = logoPreview.split(',');
+          const mime = header.match(/:(.*?);/)?.[1] ?? 'image/png';
+          const bytes = atob(data);
+          const arr = new Uint8Array(bytes.length);
+          for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+          logoChange = new Blob([arr], { type: mime });
+        }
+      }
+
+      await onSubmit(input, logoChange);
       onClose();
     } finally {
       setSaving(false);

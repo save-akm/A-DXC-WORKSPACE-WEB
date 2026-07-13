@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import {
   Bell,
   Check,
   CheckCircle2,
+  ChevronRight,
   Eye,
   EyeOff,
   History,
@@ -26,6 +27,13 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -40,12 +48,15 @@ import { toast } from '@/components/ui/toast';
 import {
   changePasswordRequest,
   fetchLoginHistoryRequest,
+  fetchSecurityPreferencesRequest,
   fetchSessionsRequest,
   revokeOtherSessionsRequest,
-  updateSecurityRequest,
+  toggle2FARequest,
+  updatePreferencesRequest,
   type ActiveSession,
   type LoginHistoryEntry,
 } from '@/lib/api/security';
+import { PinModal } from './pin-modal';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +71,7 @@ export interface SecurityPreset {
 
 const DEFAULT_PRESET: SecurityPreset = {
   twoFactorEnabled: false,
-  loginAlertsEnabled: true,
+  loginAlertsEnabled: false,
   loginHistory: [],
   activeSessions: [],
 };
@@ -162,6 +173,9 @@ export function SecurityForm({ preset }: SecurityFormProps) {
 
   const [submitting, setSubmitting] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const [historySheetOpen, setHistorySheetOpen] = useState(false);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
   const [sessions, setSessions] = useState<ActiveSession[]>(fullPreset.activeSessions);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([]);
@@ -178,12 +192,42 @@ export function SecurityForm({ preset }: SecurityFormProps) {
       .then(setSessions)
       .catch(() => {})
       .finally(() => setSessionsLoading(false));
+
     setHistoryLoading(true);
     fetchLoginHistoryRequest()
       .then(setLoginHistory)
       .catch(() => {})
       .finally(() => setHistoryLoading(false));
+
+    fetchSecurityPreferencesRequest()
+      .then((prefs) => {
+        setHasPin(prefs.hasPin);
+        form.reset({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+          twoFactorEnabled: prefs.twoFactorEnabled,
+          loginAlertsEnabled: prefs.notifyNewDevice,
+        });
+      })
+      .catch(() => {});
   }, []);
+
+  const handleToggle2FA = useCallback(
+    (newValue: boolean) => {
+      if (newValue && !hasPin) {
+        setPinModalOpen(true);
+      } else {
+        form.setValue('twoFactorEnabled', newValue, { shouldDirty: true });
+      }
+    },
+    [hasPin, form],
+  );
+
+  const handlePinSuccess = useCallback(() => {
+    setHasPin(true);
+    form.setValue('twoFactorEnabled', true, { shouldDirty: true });
+  }, [form]);
 
   const watched = useWatch({ control: form.control });
   const isDirty = form.formState.isDirty;
@@ -207,20 +251,18 @@ export function SecurityForm({ preset }: SecurityFormProps) {
     const work = (async () => {
       if (wantsPassword) {
         await changePasswordRequest(accessToken, {
-          currentPassword: values.currentPassword,
+          oldPassword: values.currentPassword,
           newPassword: values.newPassword,
         });
       }
 
-      const toggleBody: {
-        twoFactorEnabled?: boolean;
-        loginAlertsEnabled?: boolean;
-      } = {};
-      if (dirty.twoFactorEnabled) toggleBody.twoFactorEnabled = values.twoFactorEnabled;
-      if (dirty.loginAlertsEnabled)
-        toggleBody.loginAlertsEnabled = values.loginAlertsEnabled;
-      if (Object.keys(toggleBody).length > 0) {
-        await updateSecurityRequest(accessToken, toggleBody);
+      if (dirty.twoFactorEnabled) {
+        await toggle2FARequest(accessToken, values.twoFactorEnabled);
+      }
+      if (dirty.loginAlertsEnabled) {
+        await updatePreferencesRequest(accessToken, {
+          notifyNewDevice: values.loginAlertsEnabled,
+        });
       }
 
       form.reset({
@@ -398,6 +440,7 @@ export function SecurityForm({ preset }: SecurityFormProps) {
                 icon={ShieldCheck}
                 title="ยืนยันตัวตนสองขั้นตอน (2FA)"
                 description="ต้องกรอกรหัสจากแอป Authenticator ทุกครั้งที่ลงชื่อเข้าใช้"
+                onOverrideChange={handleToggle2FA}
               />
               <ToggleRow
                 control={form.control}
@@ -430,47 +473,23 @@ export function SecurityForm({ preset }: SecurityFormProps) {
             ) : loginHistory.length === 0 ? (
               <EmptyState text="ยังไม่มีประวัติการเข้าสู่ระบบ" />
             ) : (
-              <ul className="divide-y divide-border/60">
-                {loginHistory.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex flex-col gap-2 py-3 text-xs"
+              <>
+                <ul className="divide-y divide-border/60">
+                  {loginHistory.slice(0, 5).map((entry) => (
+                    <HistoryRow key={entry.id} entry={entry} />
+                  ))}
+                </ul>
+                {loginHistory.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setHistorySheetOpen(true)}
+                    className="mt-3 flex w-full cursor-pointer items-center justify-between rounded-xl border border-border/60 bg-sky-500/5 px-3 py-2 text-xs font-medium text-sky-600 transition-colors hover:bg-sky-500/10 dark:text-sky-400"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        {entry.status === 'SUCCESS' ? (
-                          <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
-                        ) : (
-                          <XCircle className="size-3.5 shrink-0 text-rose-500" />
-                        )}
-                        <span
-                          className={cn(
-                            'font-semibold',
-                            entry.status === 'SUCCESS'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-rose-600 dark:text-rose-400',
-                          )}
-                        >
-                          {entry.status === 'SUCCESS' ? 'สำเร็จ' : 'ล้มเหลว'}
-                        </span>
-                      </div>
-                      <span className="font-mono text-muted-foreground">
-                        {formatTimestamp(entry.createdAt)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
-                      <span className="font-mono">{entry.ipAddress}</span>
-                      <span>{entry.browser} · {entry.os}</span>
-                      {entry.location ? (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="size-3 text-sky-500" />
-                          {entry.location}
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    <span>ดูประวัติทั้งหมด {loginHistory.length} ครั้ง</span>
+                    <ChevronRight className="size-3.5" />
+                  </button>
+                )}
+              </>
             )}
           </Section>
 
@@ -574,7 +593,39 @@ export function SecurityForm({ preset }: SecurityFormProps) {
           </div>
         </div>
       </form>
-    </Form>
+
+      <PinModal
+        open={pinModalOpen}
+        onOpenChange={setPinModalOpen}
+        onSuccess={handlePinSuccess}
+      />
+
+      <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
+      <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
+        <SheetHeader className="border-b border-border/60 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
+              <History className="size-4 text-sky-500" />
+            </span>
+            <div>
+              <SheetTitle>ประวัติการเข้าสู่ระบบ</SheetTitle>
+              <SheetDescription>
+                {loginHistory.length} รายการล่าสุด
+              </SheetDescription>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-4">
+          <ul className="divide-y divide-border/60">
+            {loginHistory.map((entry) => (
+              <HistoryRow key={entry.id} entry={entry} />
+            ))}
+          </ul>
+        </div>
+      </SheetContent>
+    </Sheet>
+  </Form>
   );
 }
 
@@ -626,12 +677,14 @@ function ToggleRow({
   icon: Icon,
   title,
   description,
+  onOverrideChange,
 }: {
   control: Control<SecurityFormValues>;
   name: 'twoFactorEnabled' | 'loginAlertsEnabled';
   icon: LucideIcon;
   title: string;
   description: string;
+  onOverrideChange?: (v: boolean) => void;
 }) {
   return (
     <FormField
@@ -650,7 +703,7 @@ function ToggleRow({
           </div>
           <Switch
             checked={!!field.value}
-            onChange={(v) => field.onChange(v)}
+            onChange={(v) => onOverrideChange ? onOverrideChange(v) : field.onChange(v)}
             label={title}
           />
         </FormItem>
@@ -827,10 +880,8 @@ function labelDevice(device: ActiveSession['device']): string {
 }
 
 function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  const m = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+  return m ? `${m[1]} ${m[2]}` : iso;
 }
 
 function formatRelative(iso: string): string {
@@ -941,5 +992,46 @@ function Section({ tone, icon: Icon, title, subtitle, children }: SectionProps) 
       </div>
       <div className="relative">{children}</div>
     </section>
+  );
+}
+
+/* ─── HistoryRow ─────────────────────────────────────────────────────── */
+
+function HistoryRow({ entry }: { entry: LoginHistoryEntry }) {
+  return (
+    <li className="flex flex-col gap-2 py-3 text-xs">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          {entry.status === 'SUCCESS' ? (
+            <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+          ) : (
+            <XCircle className="size-3.5 shrink-0 text-rose-500" />
+          )}
+          <span
+            className={cn(
+              'font-semibold',
+              entry.status === 'SUCCESS'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-rose-600 dark:text-rose-400',
+            )}
+          >
+            {entry.status === 'SUCCESS' ? 'สำเร็จ' : 'ล้มเหลว'}
+          </span>
+        </div>
+        <span className="font-mono text-muted-foreground">
+          {formatTimestamp(entry.createdAt)}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+        <span className="font-mono">{entry.ipAddress}</span>
+        <span>{entry.browser} · {entry.os}</span>
+        {entry.location ? (
+          <span className="flex items-center gap-1">
+            <MapPin className="size-3 text-sky-500" />
+            {entry.location}
+          </span>
+        ) : null}
+      </div>
+    </li>
   );
 }

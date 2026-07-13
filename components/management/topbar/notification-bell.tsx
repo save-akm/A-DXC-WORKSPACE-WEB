@@ -1,30 +1,68 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
+  AtSign,
   Bell,
   BellOff,
   CheckCheck,
   Clock,
   Cog,
+  Heart,
   type LucideIcon,
   MessageCircle,
+  MessageSquare,
   Megaphone,
   ShieldAlert,
   Workflow,
   X,
 } from 'lucide-react';
 import {
-  selectUnreadCount,
-  useNotificationStore,
-  type NotificationItem,
-  type NotificationType,
-} from '@/lib/stores/notification-store';
+  dismissNotifications,
+  fetchInbox,
+  fetchUnreadCount,
+  markAllRead as apiMarkAllRead,
+  markRead as apiMarkRead,
+} from '@/lib/api/notifications';
+import { useSocketEvent } from '@/components/socket/SocketProvider';
+import type {
+  InboxItem,
+  NotificationNewEvent,
+  NotificationReadEvent,
+  NotificationType,
+  NotificationUpdatedEvent,
+} from '@/lib/notifications/types';
 import { cn } from '@/lib/utils';
+
+/* ─── Display model ───────────────────────────────────────────────── */
+
+interface BellItem {
+  /** recipientId — the handle every read/dismiss mutation uses. */
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  createdAt: number; // epoch ms
+  read: boolean;
+  actionUrl: string | null;
+}
+
+function toBellItem(it: InboxItem): BellItem {
+  const n = it.notification;
+  return {
+    id: it.id,
+    type: n.type,
+    title: n.header,
+    message: n.detail,
+    createdAt: new Date(n.sentAt ?? n.createdAt).getTime(),
+    read: it.isRead,
+    actionUrl: n.actionUrl,
+  };
+}
 
 /* ─── Type styling ─────────────────────────────────────────────────── */
 
@@ -107,6 +145,33 @@ const typeStyles: Record<NotificationType, TypeStyle> = {
     border: 'border-emerald-300/70 dark:border-emerald-500/40',
     shadow: 'shadow-emerald-500/10',
   },
+  CHAT_MENTION: {
+    label: 'Mention',
+    icon: AtSign,
+    bg: 'bg-brand-muted',
+    fg: 'text-brand',
+    dot: 'bg-brand',
+    border: 'border-brand/30',
+    shadow: 'shadow-brand/10',
+  },
+  KNOWLEDGE_COMMENT: {
+    label: 'ความคิดเห็น',
+    icon: MessageSquare,
+    bg: 'bg-indigo-500/10',
+    fg: 'text-indigo-500',
+    dot: 'bg-indigo-500',
+    border: 'border-indigo-300/70 dark:border-indigo-500/40',
+    shadow: 'shadow-indigo-500/10',
+  },
+  KNOWLEDGE_REACTION: {
+    label: 'ความรู้สึก',
+    icon: Heart,
+    bg: 'bg-fuchsia-500/10',
+    fg: 'text-fuchsia-500',
+    dot: 'bg-fuchsia-500',
+    border: 'border-fuchsia-300/70 dark:border-fuchsia-500/40',
+    shadow: 'shadow-fuchsia-500/10',
+  },
 };
 
 /* ─── Time helper ─────────────────────────────────────────────────── */
@@ -130,11 +195,8 @@ function timeAgo(createdAt: number): string {
 /* ─── Component ───────────────────────────────────────────────────── */
 
 export function NotificationBell() {
-  const items = useNotificationStore((s) => s.items);
-  const unread = useNotificationStore(selectUnreadCount);
-  const markRead = useNotificationStore((s) => s.markRead);
-  const markAllRead = useNotificationStore((s) => s.markAllRead);
-  const remove = useNotificationStore((s) => s.remove);
+  const [items, setItems] = useState<BellItem[]>([]);
+  const [unread, setUnread] = useState(0);
 
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -192,17 +254,125 @@ export function NotificationBell() {
     };
   }, [open]);
 
+  // ── Real data: unread count + recent inbox, kept live by socket ────────────
+  const refreshUnread = useCallback(() => {
+    fetchUnreadCount().then(setUnread).catch(() => { /* keep last known */ });
+  }, []);
+
+  const loadInbox = useCallback(() => {
+    fetchInbox({ page: 1, limit: 12 })
+      .then((res) => setItems(res.data.map(toBellItem)))
+      .catch(() => { /* leave list as-is */ });
+  }, []);
+
+  useEffect(() => { refreshUnread(); loadInbox(); }, [refreshUnread, loadInbox]);
+  // Refresh the list each time the panel opens so it reflects reads elsewhere.
+  useEffect(() => { if (open) loadInbox(); }, [open, loadInbox]);
+
+  const onNew = useCallback((...args: unknown[]) => {
+    const e = args[0] as NotificationNewEvent;
+    // Trust the server's count when present — aggregated events don't bump it.
+    setUnread((c) => (typeof e.unreadCount === 'number' ? e.unreadCount : c + 1));
+    setItems((prev) => {
+      if (prev.some((it) => it.id === e.recipientId)) return prev;
+      const item: BellItem = {
+        id: e.recipientId,
+        type: e.type,
+        title: e.header,
+        message: e.detail,
+        createdAt: new Date(e.createdAt).getTime(),
+        read: false,
+        actionUrl: e.actionUrl,
+      };
+      return [item, ...prev].slice(0, 15);
+    });
+  }, []);
+
+  /**
+   * An unread notification was rewritten in place (e.g. reactions on one post
+   * folded into a single row). Refresh its text; never raise the badge.
+   */
+  const onUpdated = useCallback((...args: unknown[]) => {
+    const e = args[0] as NotificationUpdatedEvent;
+    if (typeof e.unreadCount === 'number') setUnread(e.unreadCount);
+    setItems((prev) => {
+      const idx = prev.findIndex((it) => it.id === e.recipientId);
+      const item: BellItem = {
+        id: e.recipientId,
+        type: e.type,
+        title: e.header,
+        message: e.detail,
+        createdAt: new Date(e.createdAt).getTime(),
+        read: false,
+        actionUrl: e.actionUrl,
+      };
+      // Not in the loaded slice (older than the last 15) — leave the list alone.
+      if (idx === -1) return prev;
+      const next = [...prev];
+      next[idx] = item;
+      return next;
+    });
+  }, []);
+
+  const onRead = useCallback((...args: unknown[]) => {
+    const e = args[0] as NotificationReadEvent;
+    if (typeof e?.unreadCount === 'number') setUnread(e.unreadCount);
+    const ids = new Set(e?.recipientIds ?? []);
+    if (ids.size) setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, read: true } : it)));
+  }, []);
+
+  const onDismissed = useCallback((...args: unknown[]) => {
+    const e = args[0] as { unreadCount?: number };
+    if (typeof e?.unreadCount === 'number') setUnread(e.unreadCount);
+  }, []);
+
+  useSocketEvent('notification:new', onNew, [onNew]);
+  useSocketEvent('notification:updated', onUpdated, [onUpdated]);
+  useSocketEvent('notification:read', onRead, [onRead]);
+  useSocketEvent('notification:dismissed', onDismissed, [onDismissed]);
+
+  // ── Mutations (optimistic, reconciled by the API's unreadCount) ────────────
+  const markRead = useCallback((id: string) => {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, read: true } : it)));
+    setUnread((c) => Math.max(0, c - 1));
+    apiMarkRead(id).then((r) => setUnread(r.unreadCount)).catch(() => refreshUnread());
+  }, [refreshUnread]);
+
+  const markAllRead = useCallback(() => {
+    setItems((prev) => prev.map((it) => ({ ...it, read: true })));
+    setUnread(0);
+    apiMarkAllRead().then((r) => setUnread(r.unreadCount)).catch(() => refreshUnread());
+  }, [refreshUnread]);
+
+  const remove = useCallback((id: string) => {
+    setItems((prev) => {
+      const wasUnread = prev.some((it) => it.id === id && !it.read);
+      if (wasUnread) setUnread((c) => Math.max(0, c - 1));
+      return prev.filter((it) => it.id !== id);
+    });
+    dismissNotifications([id]).then((r) => setUnread(r.unreadCount)).catch(() => { refreshUnread(); loadInbox(); });
+  }, [refreshUnread, loadInbox]);
+
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => b.createdAt - a.createdAt),
     [items],
   );
 
-  const handleItemClick = (n: NotificationItem) => {
+  const handleItemClick = (n: BellItem) => {
     if (!n.read) markRead(n.id);
-    if (n.href) {
-      setOpen(false);
-      router.push(n.href);
+    setOpen(false);
+    // Follow the notification's own link when it has one; external URLs open
+    // in a new tab. Fall back to the full Notification page otherwise.
+    const url = n.actionUrl?.trim();
+    if (url) {
+      if (/^https?:\/\//i.test(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        router.push(url);
+      }
+      return;
     }
+    router.push('/notifications');
   };
 
   const handleRemove = (e: React.MouseEvent, id: string) => {
@@ -281,7 +451,7 @@ export function NotificationBell() {
               ) : (
                 <ul className="flex flex-col gap-2 p-2">
                   {sortedItems.map((n) => {
-                    const style = typeStyles[n.type];
+                    const style = typeStyles[n.type] ?? typeStyles.SYSTEM;
                     const Icon = style.icon;
                     return (
                       <li key={n.id}>

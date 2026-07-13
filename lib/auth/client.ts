@@ -62,7 +62,7 @@ export interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
 }
 
 export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions = {}): Promise<T> {
-  const { auth = true, body, headers, ...init } = opts;
+  const { auth = true, body, headers, cache = 'no-store', ...init } = opts;
 
   const buildHeaders = async (): Promise<Headers> => {
     const h = new Headers(headers);
@@ -79,6 +79,7 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
   const exec = async (): Promise<Response> =>
     fetch("/api/_proxy" + path, {
       ...init,
+      cache,
       headers: await buildHeaders(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -96,7 +97,8 @@ export async function apiFetch<T = unknown>(path: string, opts: ApiFetchOptions 
     let code: string | undefined;
     try {
       const data = await res.json();
-      message = (data?.message as string) ?? message;
+      // envelope APIs ใช้ message, กลุ่ม document/collection API ตอบ { error }
+      message = (data?.message as string) ?? (data?.error as string) ?? message;
       code = (data?.code as string) ?? undefined;
     } catch {
       // non-JSON

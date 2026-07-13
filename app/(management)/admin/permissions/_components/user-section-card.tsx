@@ -1,6 +1,6 @@
 'use client';
 
-import type React from 'react';
+import { ShieldAlert } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PermissionCheckbox } from './permission-checkbox';
 import type { CheckboxState } from './permission-checkbox';
@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { USER_ACTIONS, ACTION_LABELS } from '../types';
 import { roleBadgeClass } from '@/lib/utils/role-color';
+import { cn } from '@/lib/utils';
 
 function makeKey(userId: string, menuId: string, action: PermissionAction): DirtyKey {
   return `user:${userId}:menu:${menuId}:action:${action}`;
@@ -64,7 +65,7 @@ export function UserSectionCard({
 
   return (
     <div>
-      <table className="w-full border-collapse">
+      <table className="w-full table-fixed border-collapse">
         <thead>
           <tr className="bg-muted/20">
             <th className="py-2.5 pl-5 pr-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground w-56">
@@ -76,9 +77,21 @@ export function UserSectionCard({
             {USER_ACTIONS.map((action) => (
               <th
                 key={action}
-                className="py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                className={cn(
+                  'w-24 py-2.5 px-3 text-center text-[10px] font-semibold uppercase tracking-widest',
+                  action === 'highPrivilege'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-muted-foreground',
+                )}
               >
-                {ACTION_LABELS[action]}
+                {action === 'highPrivilege' ? (
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <ShieldAlert size={11} className="shrink-0" />
+                    {ACTION_LABELS[action]}
+                  </span>
+                ) : (
+                  ACTION_LABELS[action]
+                )}
               </th>
             ))}
           </tr>
@@ -118,6 +131,7 @@ export function UserSectionCard({
                     <div className="flex justify-center">
                       <PermissionCheckbox
                         state={cbState}
+                        variant={action === 'highPrivilege' ? 'privilege' : 'default'}
                         onToggle={() => onToggle(key, original, !current)}
                       />
                     </div>
@@ -130,11 +144,15 @@ export function UserSectionCard({
       </table>
 
       <div className="flex items-center justify-between border-t border-border/50 px-5 py-3">
-        <div className="text-[10px] text-muted-foreground/70">
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs text-muted-foreground">
+            แสดง {items.length} จาก {total} users
+          </span>
           {hasDirty && (
-            <span aria-hidden="true">🟢 = เพิ่มใหม่ &nbsp; 🔴 = ลบออก &nbsp; (ยังไม่ได้ save) &nbsp;·&nbsp; </span>
+            <span className="text-[10px] text-muted-foreground/70" aria-hidden="true">
+              🟢 = เพิ่มใหม่ &nbsp; 🔴 = ลบออก &nbsp; (ยังไม่ได้ save)
+            </span>
           )}
-          แสดง {items.length} จาก {total} users
         </div>
         {items.length < total && (
           <button

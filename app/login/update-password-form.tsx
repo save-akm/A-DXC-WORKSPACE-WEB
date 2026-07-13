@@ -8,13 +8,12 @@ import type { UpdatePasswordActionState } from '@/lib/auth/types';
 
 interface Props {
   accessToken: string;
-  refreshToken: string;
-  onSuccess: () => void;
+  onSuccess: (newAccessToken: string, newExpiresAt: number) => void;
 }
 
 const initialState: UpdatePasswordActionState = { status: 'idle' };
 
-export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Props) {
+export function UpdatePasswordForm({ accessToken, onSuccess }: Props) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -24,12 +23,12 @@ export function UpdatePasswordForm({ accessToken, refreshToken, onSuccess }: Pro
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   const [state, formAction, pending] = useActionState<UpdatePasswordActionState, FormData>(
-    (prev, formData) => updatePasswordAction(accessToken, refreshToken, prev, formData),
+    (prev, formData) => updatePasswordAction(accessToken, prev, formData),
     initialState,
   );
 
   useEffect(() => {
-    if (state.status === 'success') onSuccess();
+    if (state.status === 'success') onSuccess(state.accessToken, state.expiresAt);
   }, [state, onSuccess]);
 
   return (

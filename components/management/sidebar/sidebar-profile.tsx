@@ -63,8 +63,6 @@ export function SidebarProfile() {
               initial={initial}
               color={color}
               size="sm"
-              showStatus
-              statusRingClass="bg-sidebar"
               alt={name}
             />
 

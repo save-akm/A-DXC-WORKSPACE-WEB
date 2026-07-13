@@ -41,7 +41,7 @@ export function Sidebar() {
           animate={{ x: isMobileOpen ? 0 : '-100%' }}
           transition={{ type: 'spring', stiffness: 320, damping: 32 }}
           style={{ width: MOBILE_WIDTH }}
-          className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-sidebar shadow-xl md:hidden"
+          className="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-sidebar shadow-xl md:hidden print:hidden"
           aria-label="Sidebar"
           aria-hidden={!isMobileOpen}
         >
@@ -56,7 +56,7 @@ export function Sidebar() {
           animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
           transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           data-collapsed={collapsed}
-          className="relative hidden h-svh shrink-0 flex-col border-r border-border/60 bg-sidebar md:flex"
+          className="relative hidden h-svh shrink-0 flex-col border-r border-border/60 bg-sidebar md:flex print:hidden"
           aria-label="Sidebar"
         >
           <SidebarContent />
