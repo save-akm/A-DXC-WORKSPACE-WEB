@@ -6,7 +6,9 @@ import type {
   CostInput,
   CostRow,
   CreateSurveyInput,
+  KiYearRef,
   PaginatedSurveys,
+  RefItem,
   ReviewSurveyInput,
   ScheduleInput,
   ScheduleRow,
@@ -70,6 +72,18 @@ async function uploadMultipart<T>(path: string, file: File): Promise<T> {
 /** GET /request-to-users — active SUPER_ADMIN users. project_survey:CREATE */
 export async function fetchRequestToUsers(): Promise<UserMini[]> {
   const res = await apiFetch<ApiEnvelope<UserMini[]>>(`${BASE}/request-to-users`);
+  return res.data;
+}
+
+/** GET /ki-years — KI year master data. project_survey:VIEW|CREATE */
+export async function fetchKiYears(): Promise<KiYearRef[]> {
+  const res = await apiFetch<ApiEnvelope<KiYearRef[]>>(`${BASE}/ki-years`);
+  return res.data;
+}
+
+/** GET /budget-types — budget type master data. project_survey:VIEW|CREATE */
+export async function fetchBudgetTypes(): Promise<RefItem[]> {
+  const res = await apiFetch<ApiEnvelope<RefItem[]>>(`${BASE}/budget-types`);
   return res.data;
 }
 

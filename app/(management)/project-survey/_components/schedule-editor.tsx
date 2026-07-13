@@ -8,12 +8,11 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { ScheduleInput, ScheduleJob, SchedulePlanType } from '@/lib/project-survey/types';
-import {
-  PLAN_TYPE_LABELS, PROCESS_LABELS, SCHEDULE_JOB_LABELS,
-} from '@/lib/project-survey/labels';
+import { PROCESS_LABELS } from '@/lib/project-survey/labels';
 
-const JOBS = Object.keys(SCHEDULE_JOB_LABELS) as ScheduleJob[];
-const PLAN_TYPES = Object.keys(PLAN_TYPE_LABELS) as SchedulePlanType[];
+// Shown verbatim as returned by the API — no Thai translation.
+const JOBS: ScheduleJob[] = ['REQUIREMENT', 'DEVELOP', 'START_USE'];
+const PLAN_TYPES: SchedulePlanType[] = ['ORIGINAL_PLAN', 'REVISE_PLAN', 'FORECAST_PLAN', 'ACTUAL'];
 
 /** Editable row model — numeric/date fields kept as strings for form friendliness. */
 export interface ScheduleDraft {
@@ -84,7 +83,7 @@ export function ScheduleEditor({ value, onChange, processOptions, disabled, clas
                 <Select value={row.job} onValueChange={(v) => update(i, { job: v as ScheduleJob })} disabled={disabled}>
                   <SelectTrigger size="sm" aria-label="งาน"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {JOBS.map((j) => <SelectItem key={j} value={j}>{SCHEDULE_JOB_LABELS[j]}</SelectItem>)}
+                    {JOBS.map((j) => <SelectItem key={j} value={j}>{j}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -106,7 +105,7 @@ export function ScheduleEditor({ value, onChange, processOptions, disabled, clas
                 <Select value={row.planType} onValueChange={(v) => update(i, { planType: v as SchedulePlanType })} disabled={disabled}>
                   <SelectTrigger size="sm" aria-label="ประเภทแผน"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PLAN_TYPES.map((p) => <SelectItem key={p} value={p}>{PLAN_TYPE_LABELS[p]}</SelectItem>)}
+                    {PLAN_TYPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

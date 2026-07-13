@@ -2,8 +2,6 @@
 
 import type {
   CostCategory,
-  ScheduleJob,
-  SchedulePlanType,
   SurveyStatus,
   TypeSystem,
 } from './types';
@@ -30,19 +28,6 @@ export const COST_CATEGORY_LABELS: Record<CostCategory, string> = {
   SOFTWARE: 'ซอฟต์แวร์',
   OUTSOURCE: 'จ้างภายนอก',
   IN_HOUSE: 'พัฒนาภายใน',
-};
-
-export const SCHEDULE_JOB_LABELS: Record<ScheduleJob, string> = {
-  REQUIREMENT: 'เก็บความต้องการ',
-  DEVELOP: 'พัฒนาระบบ',
-  START_USE: 'เริ่มใช้งาน',
-};
-
-export const PLAN_TYPE_LABELS: Record<SchedulePlanType, string> = {
-  ORIGINAL_PLAN: 'แผนหลัก',
-  REVISE_PLAN: 'แผนปรับปรุง',
-  FORECAST_PLAN: 'แผนคาดการณ์',
-  ACTUAL: 'ผลจริง',
 };
 
 export const PROCESS_LABELS: Record<string, string> = {

@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect, useMemo, useRef, useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader2, Send } from 'lucide-react';
@@ -15,13 +17,14 @@ import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { fetchOrgBranches, fetchOrgDepartments } from '@/lib/api/organization';
 import {
-  fetchRequestToUsers, fetchSurveys, uploadContentImage,
+  fetchBudgetTypes, fetchKiYears, fetchRequestToUsers, uploadContentImage,
 } from '@/lib/api/project-surveys';
 import type {
   CreateSurveyInput, RefItem, SurveyDetail, TypeSystem, UserMini,
 } from '@/lib/project-survey/types';
 import { USER_PROCESSES } from '@/lib/project-survey/types';
 import { TYPE_SYSTEM_LABELS, fullName, toDateInputValue } from '@/lib/project-survey/labels';
+import { assertContentImageSize, revokeAllPending } from '@/lib/project-survey/pending-images';
 import { CostEditor, draftsToCosts, type CostDraft } from './cost-editor';
 import { ScheduleEditor, draftsToSchedules, type ScheduleDraft } from './schedule-editor';
 import { MdField } from './md-field';
@@ -38,7 +41,12 @@ interface Option { id: string; name: string; code?: string }
 interface SurveyFormProps {
   /** Present in edit mode — preloads values and enables inline image upload. */
   initial?: SurveyDetail;
-  onSubmit: (input: CreateSurveyInput) => Promise<void>;
+  /**
+   * Create mode: `pendingImages` holds images inserted before the survey
+   * exists (blob URL → File) — the caller must create the survey, then relink
+   * them via `relinkPendingImages` before persisting the markdown fields.
+   */
+  onSubmit: (input: CreateSurveyInput, pendingImages: Map<string, File>) => Promise<void>;
   submitting: boolean;
 }
 
@@ -54,7 +62,6 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   const [branches, setBranches] = useState<Option[]>([]);
   const [departments, setDepartments] = useState<Option[]>([]);
   const [requestToUsers, setRequestToUsers] = useState<UserMini[]>([]);
-  // No dedicated endpoints yet (per API doc) — derived from existing list relations.
   const [kiOptions, setKiOptions] = useState<Option[]>([]);
   const [budgetOptions, setBudgetOptions] = useState<Option[]>([]);
   const [loadingMaster, setLoadingMaster] = useState(true);
@@ -62,21 +69,22 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [orgBranches, orgDepartments, superAdmins, page] = await Promise.all([
+      const [orgBranches, orgDepartments, superAdmins, kiYears, budgetTypes] = await Promise.all([
         fetchOrgBranches(),
         fetchOrgDepartments(),
         fetchRequestToUsers().catch(() => [] as UserMini[]),
-        fetchSurveys({ limit: 100 }).catch(() => null),
+        fetchKiYears().catch(() => []),
+        fetchBudgetTypes().catch(() => []),
       ]);
       if (cancelled) return;
 
-      const ki = new Map<string, Option>();
-      const budget = new Map<string, Option>();
-      for (const item of page?.items ?? []) {
-        if (item.kiYear) ki.set(item.kiYear.id, { id: item.kiYear.id, name: item.kiYear.name });
-        if (item.budgetType) budget.set(item.budgetType.id, { id: item.budgetType.id, name: item.budgetType.name });
-      }
-      // Edit mode: make sure current relations are selectable even if absent from the list.
+      const ki = new Map<string, Option>(
+        kiYears.map((k) => [k.id, { id: k.id, name: k.name }]),
+      );
+      const budget = new Map<string, Option>(
+        budgetTypes.map((b) => [b.id, { id: b.id, name: b.name, code: b.code }]),
+      );
+      // Edit mode: make sure current relations are selectable even if absent from master data.
       if (initial) {
         ki.set(initial.kiYear.id, { id: initial.kiYear.id, name: initial.kiYear.name });
         budget.set(initial.budgetType.id, { id: initial.budgetType.id, name: initial.budgetType.name });
@@ -125,6 +133,23 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Create mode only: images staged locally (blob URL → File) before the
+  // survey exists. Revoked as each is relinked on submit, or on unmount if
+  // the user cancels/navigates away first.
+  const pendingImagesRef = useRef<Map<string, File>>(new Map());
+  useEffect(() => {
+    if (initial) return;
+    const pending = pendingImagesRef.current;
+    return () => revokeAllPending(pending);
+  }, [initial]);
+
+  async function stageLocalImage(file: File): Promise<{ url: string }> {
+    assertContentImageSize(file);
+    const url = URL.createObjectURL(file);
+    pendingImagesRef.current.set(url, file);
+    return { url };
+  }
+
   const selectedRequestTo = useMemo(
     () => requestToUsers.find((u) => u.id === requestToId),
     [requestToUsers, requestToId],
@@ -165,7 +190,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
       detail: detail.trim() || undefined,
       costs: draftsToCosts(costs),
       schedules: draftsToSchedules(schedules),
-    });
+    }, pendingImagesRef.current);
   }
 
   const fieldError = (key: string) =>
@@ -264,14 +289,14 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
                       disabled={submitting}
                       onClick={() => setTypeSystem(t)}
                       className={cn(
-                        'relative z-10 flex-1 cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
-                        typeSystem === t ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                        'relative z-10 flex-1 cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                        typeSystem === t ? 'text-brand' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
                       {typeSystem === t && (
                         <motion.span
                           layoutId="survey-type-system"
-                          className="absolute inset-0 -z-10 rounded-md bg-accent/70"
+                          className="absolute inset-0 -z-10 rounded-md bg-brand-muted ring-1 ring-brand/30"
                           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                         />
                       )}
@@ -282,7 +307,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">ผู้รับคำร้อง (Super Admin) <span className="text-destructive">*</span></label>
+                <label className="text-sm font-medium">ผู้รับคำร้อง <span className="text-destructive">*</span></label>
                 <Select value={requestToId} onValueChange={setRequestToId} disabled={selectDisabled}>
                   <SelectTrigger aria-invalid={!!errors.requestToId || undefined}>
                     {selectedRequestTo ? (
@@ -309,10 +334,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
                             color="bg-violet-500"
                             size="xs"
                           />
-                          <span>
-                            {fullName(u)}
-                            {u.email && <span className="ml-1.5 text-xs text-muted-foreground">{u.email}</span>}
-                          </span>
+                          <span>{fullName(u)}</span>
                         </span>
                       </SelectItem>
                     ))}
@@ -334,7 +356,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
           <CardHeader>
             <CardTitle>รายละเอียดคำร้อง</CardTitle>
             <CardDescription>
-              รองรับ Markdown{isEdit ? ' — แทรกรูปภาพประกอบได้' : ' — บันทึกคำร้องก่อนจึงจะแทรกรูปภาพได้'}
+              รองรับ Markdown — แทรกรูปภาพประกอบได้ (ไฟล์ไม่เกิน 25 MB)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -345,7 +367,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
               onChange={setRequest}
               placeholder="อธิบายปัญหาปัจจุบันและสิ่งที่ต้องการ…"
               disabled={submitting}
-              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : undefined}
+              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : stageLocalImage}
             />
             <MdField
               id="changePoint"
@@ -354,7 +376,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
               onChange={setChangePoint}
               placeholder="สิ่งที่จะเปลี่ยนไปจากระบบ/ขั้นตอนเดิม…"
               disabled={submitting}
-              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : undefined}
+              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : stageLocalImage}
             />
             <MdField
               id="detail"
@@ -363,7 +385,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
               onChange={setDetail}
               placeholder="ประโยชน์ที่คาดว่าจะได้รับ ขอบเขต หรือเงื่อนไขอื่น ๆ…"
               disabled={submitting}
-              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : undefined}
+              onUploadImage={initial ? (f) => uploadContentImage(initial.id, f) : stageLocalImage}
             />
           </CardContent>
         </Card>
