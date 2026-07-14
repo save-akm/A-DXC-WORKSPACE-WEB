@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, BadgeCheck, Building2, CalendarClock, ClipboardList, FileText, Pencil, Trash2,
+  ArrowLeft, BadgeCheck, Building2, CalendarClock, ClipboardList, FileText, Pencil, Send, Trash2, XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,9 @@ import { PageHeader } from '@/components/management/page-header';
 import { Markdown } from '@/app/(management)/blog/_components/markdown';
 import { useAuthStore } from '@/lib/store';
 import { useMenuPermission } from '@/lib/hooks/use-menu-permission';
-import { approveSurvey, deleteSurvey, fetchSurvey } from '@/lib/api/project-surveys';
+import {
+  approveSurvey, deleteSurvey, fetchSurvey, rejectSurvey, submitSurvey,
+} from '@/lib/api/project-surveys';
 import type { SurveyAttachment, SurveyDetail, UserMini } from '@/lib/project-survey/types';
 import {
   STATUS_DESCRIPTIONS, TYPE_SYSTEM_LABELS, formatDateTime, fullName,
@@ -27,8 +29,10 @@ import { AttachmentsPanel } from '../_components/attachments-panel';
 import { CommentsPanel } from '../_components/comments-panel';
 import { CostsCard } from '../_components/costs-card';
 import { NotificationsCard } from '../_components/notifications-card';
+import { RejectDialog } from '../_components/reject-dialog';
 import { ReviewPanel } from '../_components/review-panel';
 import { SchedulesCard } from '../_components/schedules-card';
+import { SubmitDialog } from '../_components/submit-dialog';
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 const fadeUp = (delay = 0) => ({
@@ -85,7 +89,7 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
   const { id } = use(params);
   const router = useRouter();
   const meId = useAuthStore((s) => s.user?.id ?? '');
-  const { canUpdate, canDelete } = useMenuPermission('project_survey');
+  const { canUpdate } = useMenuPermission('project_survey');
 
   const [survey, setSurvey] = useState<SurveyDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +97,10 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
 
   const [approveOpen, setApproveOpen] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [sendingDraft, setSendingDraft] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -121,6 +129,37 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
       toast.error(err instanceof Error ? err.message : 'อนุมัติไม่สำเร็จ');
     } finally {
       setApproving(false);
+    }
+  }
+
+  async function handleReject(reason: string) {
+    setRejecting(true);
+    try {
+      const next = await rejectSurvey(id, { reason });
+      setSurvey(next);
+      setRejectOpen(false);
+      toast.success(`ปฏิเสธคำร้อง ${next.docNo} แล้ว`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'ปฏิเสธไม่สำเร็จ');
+    } finally {
+      setRejecting(false);
+    }
+  }
+
+  async function handleSubmitDraft(requestToId?: string) {
+    const wasRejected = survey?.status === 'REJECT';
+    setSendingDraft(true);
+    try {
+      const next = await submitSurvey(id, { requestToId });
+      setSurvey(next);
+      setSubmitOpen(false);
+      toast.success(
+        `${wasRejected ? 'ส่งคำร้องอีกครั้ง' : 'ส่งคำร้อง'} ${next.docNo} แล้ว — ระบบแจ้งผู้รับคำร้องทางอีเมล`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'ส่งคำร้องไม่สำเร็จ');
+    } finally {
+      setSendingDraft(false);
     }
   }
 
@@ -176,11 +215,31 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
 
   const isOwner = survey.requesterId === meId || survey.createdById === meId;
   const isRequestTo = survey.requestToId === meId;
-  const canEditDoc = survey.status === 'SEND' && isOwner;
-  const canDeleteDoc = survey.status === 'SEND' && isOwner && (canUpdate || canDelete);
-  const canReview = canUpdate && survey.status === 'REVIEW';
-  const canUploadFiles = (isOwner && survey.status === 'SEND') || canReview;
-  const canComment = survey.status !== 'APPROVE' && (isOwner || isRequestTo || canUpdate);
+  // A reviewer is an A-DXC teammate (project_survey:UPDATE) acting on someone
+  // else's request — never the requester. `!isOwner` is the discriminator that
+  // keeps reviewer-only UI (review form, reject) off the owner's own document,
+  // even though the requester also holds UPDATE (needed to edit/submit/delete).
+  const isReviewer = canUpdate && !isOwner;
+  // The owner may change/remove their request only before it enters the review
+  // pipeline (DRAFT) or after it bounces back (REJECT). SEND/REVIEW/APPROVE are
+  // locked to the owner — a SEND has already emailed the requestTo.
+  const isOwnerEditable = survey.status === 'DRAFT' || survey.status === 'REJECT';
+
+  // Owner actions — edit and delete share the same editable window.
+  const canEditDoc = isOwnerEditable && isOwner;
+  const canDeleteDoc = isOwnerEditable && isOwner;
+  // Submit a fresh draft, or resubmit a rejected request after fixing it.
+  const canSubmit = isOwnerEditable && isOwner;
+  const isResubmit = survey.status === 'REJECT';
+
+  // Reviewer actions — A-DXC only, on requests that aren't theirs.
+  const canReject = isReviewer && (survey.status === 'SEND' || survey.status === 'REVIEW');
+  const canReview = isReviewer && survey.status === 'REVIEW';
+  // Business rule (confirmed): approve is reserved for the primary requestTo.
+  const canApprove = canReview && isRequestTo;
+
+  const canUploadFiles = (isOwner && isOwnerEditable) || canReview;
+  const canComment = survey.status !== 'APPROVE' && survey.status !== 'REJECT' && (isOwner || isReviewer);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 sm:gap-6 sm:p-6">
@@ -207,12 +266,24 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
               </Button>
             )}
             {canEditDoc && (
-              <Button variant="save" size="sm" onClick={() => router.push(`/project-survey/${survey.id}/edit`)}>
+              <Button variant="outline" size="sm" onClick={() => router.push(`/project-survey/${survey.id}/edit`)}>
                 <Pencil />
                 แก้ไข
               </Button>
             )}
-            {canReview && (
+            {canSubmit && (
+              <Button variant="save" size="sm" onClick={() => setSubmitOpen(true)}>
+                <Send />
+                {isResubmit ? 'ส่งอีกครั้ง' : 'ส่งคำร้อง'}
+              </Button>
+            )}
+            {canReject && (
+              <Button variant="destructive" size="sm" onClick={() => setRejectOpen(true)}>
+                <XCircle />
+                ปฏิเสธ
+              </Button>
+            )}
+            {canApprove && (
               <Button variant="save" size="sm" onClick={() => setApproveOpen(true)}>
                 <BadgeCheck />
                 อนุมัติ
@@ -232,6 +303,19 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
             </div>
             <SurveyStepper status={survey.status} />
           </CardContent>
+          {survey.status === 'REJECT' && survey.reason && (
+            // Full-bleed rose footer band: -mb-3 cancels the sm card's bottom
+            // padding so the tint reaches the rounded bottom edge.
+            <div className="-mb-3 flex items-start gap-3 border-t border-rose-500/15 bg-rose-500/[0.06] px-3 py-3">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/12 text-rose-600 ring-1 ring-rose-500/20 dark:text-rose-400">
+                <XCircle size={15} />
+              </span>
+              <div className="min-w-0 space-y-0.5 pt-0.5">
+                <p className="text-xs font-semibold text-rose-700 dark:text-rose-400">เหตุผลที่ปฏิเสธ</p>
+                <p className="text-[13px] leading-relaxed text-foreground">{survey.reason}</p>
+              </div>
+            </div>
+          )}
         </Card>
       </motion.div>
 
@@ -322,11 +406,11 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
           </motion.div>
 
           <motion.div {...fadeUp(0.18)}>
-            <NotificationsCard surveyId={survey.id} />
+            <NotificationsCard surveyId={survey.id} meId={meId} canViewAll={isReviewer} />
           </motion.div>
 
           <motion.div {...fadeUp(0.22)}>
-            <ActivityPanel surveyId={survey.id} showAudit={canUpdate} />
+            <ActivityPanel surveyId={survey.id} showAudit={isReviewer} />
           </motion.div>
         </div>
       </div>
@@ -338,6 +422,26 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
         loading={approving}
         onConfirm={handleApprove}
         onCancel={() => setApproveOpen(false)}
+      />
+
+      <RejectDialog
+        open={rejectOpen}
+        docNo={survey.docNo}
+        projectName={survey.projectName}
+        loading={rejecting}
+        onConfirm={handleReject}
+        onCancel={() => setRejectOpen(false)}
+      />
+
+      <SubmitDialog
+        open={submitOpen}
+        docNo={survey.docNo}
+        projectName={survey.projectName}
+        currentRequestTo={survey.requestTo}
+        resubmit={isResubmit}
+        loading={sendingDraft}
+        onConfirm={handleSubmitDraft}
+        onCancel={() => setSubmitOpen(false)}
       />
 
       <ConfirmDialog

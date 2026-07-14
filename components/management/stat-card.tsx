@@ -32,6 +32,19 @@ function AnimatedNumber({ value }: { value: number }) {
   return <>{displayed.toLocaleString()}</>;
 }
 
+interface StatCardProps {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  gradient: string;
+  /** Renders the tile as a button — for grids that double as a filter. */
+  onClick?: () => void;
+  /** Only meaningful alongside `onClick`: this tile is the active filter. */
+  active?: boolean;
+  /** Show a placeholder instead of the number while the value is in flight. */
+  loading?: boolean;
+}
+
 /**
  * A calm metric tile. Energy comes from one category-colored chip + a thin
  * accent rule, not from 3D tilt / shine sweeps / pulsing dots (decorative
@@ -43,14 +56,14 @@ export function StatCard({
   label,
   value,
   gradient,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: number;
-  gradient: string;
-}) {
-  return (
-    <div className="group/stat relative overflow-hidden rounded-xl bg-card p-4 ring-1 ring-foreground/10 transition-shadow duration-200 hover:shadow-md">
+  onClick,
+  active,
+  loading,
+}: StatCardProps) {
+  const interactive = !!onClick;
+
+  const body = (
+    <>
       <div className="flex items-center gap-3">
         <span
           className={cn(
@@ -63,14 +76,44 @@ export function StatCard({
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
           <p className="text-2xl font-semibold leading-tight tracking-tight tabular-nums text-foreground">
-            <AnimatedNumber value={value} />
+            {loading ? (
+              <span className="my-1 block h-6 w-10 animate-pulse rounded bg-muted" />
+            ) : (
+              <AnimatedNumber value={value} />
+            )}
           </p>
         </div>
       </div>
       <span
         aria-hidden
-        className={cn("absolute inset-x-0 bottom-0 h-0.5 bg-linear-to-r opacity-70", gradient)}
+        className={cn(
+          "absolute inset-x-0 bottom-0 h-0.5 bg-linear-to-r",
+          gradient,
+          active ? "opacity-100" : "opacity-70",
+        )}
       />
-    </div>
+    </>
+  );
+
+  const base =
+    "group/stat relative overflow-hidden rounded-xl bg-card p-4 ring-1 transition-shadow duration-200 hover:shadow-md";
+
+  if (!interactive) {
+    return <div className={cn(base, "ring-foreground/10")}>{body}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={!!active}
+      className={cn(
+        base,
+        "w-full cursor-pointer text-left",
+        active ? "ring-2 ring-brand/50" : "ring-foreground/10 hover:ring-foreground/20",
+      )}
+    >
+      {body}
+    </button>
   );
 }

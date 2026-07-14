@@ -8,9 +8,10 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { CostCategory, CostInput } from '@/lib/project-survey/types';
-import { COST_CATEGORY_LABELS, formatAmount } from '@/lib/project-survey/labels';
+import { formatAmount } from '@/lib/project-survey/labels';
 
-const CATEGORIES = Object.keys(COST_CATEGORY_LABELS) as CostCategory[];
+// Shown verbatim as returned by the API — no Thai translation.
+const CATEGORIES: CostCategory[] = ['HARDWARE', 'SOFTWARE', 'OUTSOURCE', 'IN_HOUSE'];
 
 /** Editable row model — amount kept as string so the field can be cleared while typing. */
 export interface CostDraft {
@@ -19,8 +20,10 @@ export interface CostDraft {
 }
 
 export function draftsToCosts(drafts: CostDraft[]): CostInput[] {
+  // `amount` may arrive as a number when a draft is seeded from an API row
+  // (the backend returns Decimal as a number), so coerce before trimming.
   return drafts
-    .filter((d) => d.amount.trim() !== '' && Number.isFinite(Number(d.amount)))
+    .filter((d) => String(d.amount).trim() !== '' && Number.isFinite(Number(d.amount)))
     .map((d) => ({ category: d.category, amount: Number(d.amount) }));
 }
 
@@ -58,7 +61,7 @@ export function CostEditor({ value, onChange, disabled, className }: CostEditorP
             </SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>{COST_CATEGORY_LABELS[c]}</SelectItem>
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>

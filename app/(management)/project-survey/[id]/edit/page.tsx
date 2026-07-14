@@ -66,7 +66,8 @@ export default function EditProjectSurveyPage({ params }: { params: Promise<{ id
   }
 
   const isOwner = survey.requesterId === meId || survey.createdById === meId;
-  const editable = survey.status === 'SEND' && (isOwner || canUpdate);
+  const isOwnerEditable = survey.status === 'DRAFT' || survey.status === 'REJECT';
+  const editable = isOwnerEditable && (isOwner || canUpdate);
 
   if (!editable) {
     return (
@@ -77,8 +78,8 @@ export default function EditProjectSurveyPage({ params }: { params: Promise<{ id
         <div>
           <p className="text-sm font-medium">แก้ไขไม่ได้</p>
           <p className="max-w-sm text-xs text-muted-foreground">
-            {survey.status !== 'SEND'
-              ? 'คำร้องนี้เริ่มตรวจสอบแล้ว จึงไม่สามารถแก้ไขได้ — ใช้ช่องความคิดเห็นเพื่อสื่อสารเพิ่มเติม'
+            {!isOwnerEditable
+              ? 'คำร้องนี้ถูกส่งและอยู่ระหว่างตรวจสอบ/อนุมัติแล้ว จึงแก้ไขไม่ได้ — แก้ไขได้เฉพาะสถานะ “ร่าง” หรือ “ถูกปฏิเสธ” เท่านั้น'
               : 'เฉพาะเจ้าของคำร้องเท่านั้นที่แก้ไขได้'}
           </p>
         </div>
@@ -93,7 +94,7 @@ export default function EditProjectSurveyPage({ params }: { params: Promise<{ id
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 sm:gap-6 sm:p-6">
       <PageHeader
         title={`แก้ไขคำร้อง ${survey.docNo}`}
-        subtitle="แก้ไขได้ระหว่างสถานะ “ส่งแล้ว” เท่านั้น — บันทึกแล้วชุดงบประมาณและแผนงานของผู้ขอจะถูกแทนที่"
+        subtitle="แก้ไขได้เฉพาะสถานะ “ร่าง” หรือ “ถูกปฏิเสธ” เท่านั้น — บันทึกแล้วชุดงบประมาณและแผนงานของผู้ขอจะถูกแทนที่"
         icon={FilePen}
         actions={
           <Button variant="outline" size="sm" onClick={() => router.push(`/project-survey/${id}`)}>

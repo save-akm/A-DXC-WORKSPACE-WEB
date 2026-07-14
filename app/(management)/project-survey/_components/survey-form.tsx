@@ -5,7 +5,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Loader2, Send } from 'lucide-react';
+import { FileEdit, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   const [changePoint, setChangePoint] = useState(initial?.changePoint ?? '');
   const [detail, setDetail] = useState(initial?.detail ?? '');
   const [costs, setCosts] = useState<CostDraft[]>(
-    initial?.costs.map((c) => ({ category: c.category, amount: c.amount })) ?? [],
+    initial?.costs.map((c) => ({ category: c.category, amount: String(c.amount ?? '') })) ?? [],
   );
   const [schedules, setSchedules] = useState<ScheduleDraft[]>(
     initial?.schedules
@@ -127,11 +127,15 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
         planType: s.planType,
         planStart: toDateInputValue(s.planStart),
         planEnd: toDateInputValue(s.planEnd),
-        estimateCost: s.estimateCost ?? '',
+        estimateCost: s.estimateCost == null ? '' : String(s.estimateCost),
         remark: s.remark ?? '',
       })) ?? [],
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Which button is in flight — purely cosmetic (spinner placement); the
+  // parent's `submitting` prop is the actual disable/loading source of truth.
+  const [pendingMode, setPendingMode] = useState<'draft' | 'send' | null>(null);
+  useEffect(() => { if (!submitting) setPendingMode(null); }, [submitting]);
 
   // Create mode only: images staged locally (blob URL → File) before the
   // survey exists. Revoked as each is relinked on submit, or on unmount if
@@ -156,14 +160,16 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   );
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  function validate(): boolean {
+  // requestToId is only mandatory when actually sending — a draft can be
+  // saved with no requestTo picked yet (set later on submit).
+  function validate(asDraft: boolean): boolean {
     const next: Record<string, string> = {};
     if (!projectName.trim()) next.projectName = 'กรุณากรอกชื่อโครงการ';
     if (!branchId) next.branchId = 'กรุณาเลือกสาขา';
     if (!departmentId) next.departmentId = 'กรุณาเลือกแผนก';
     if (!kiId) next.kiId = 'กรุณาเลือกปี KI';
     if (!budgetTypeId) next.budgetTypeId = 'กรุณาเลือกประเภทงบประมาณ';
-    if (!requestToId) next.requestToId = 'กรุณาเลือกผู้รับคำร้อง';
+    if (!asDraft && !requestToId) next.requestToId = 'กรุณาเลือกผู้รับคำร้อง';
     if (schedules.some((s) => s.planStart && s.planEnd && s.planEnd < s.planStart)) {
       next.schedules = 'แผนงานบางรายการมีวันสิ้นสุดก่อนวันเริ่ม';
     }
@@ -171,12 +177,13 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
     return Object.keys(next).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) {
+  async function handleSave(asDraft: boolean, e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!validate(asDraft)) {
       toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
+    setPendingMode(asDraft ? 'draft' : 'send');
     await onSubmit({
       projectName: projectName.trim(),
       branchId,
@@ -184,7 +191,8 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
       kiId,
       typeSystem,
       budgetTypeId,
-      requestToId,
+      requestToId: requestToId || undefined,
+      asDraft: isEdit ? undefined : asDraft,
       request: request.trim() || undefined,
       changePoint: changePoint.trim() || undefined,
       detail: detail.trim() || undefined,
@@ -199,7 +207,7 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
   const selectDisabled = loadingMaster || submitting;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 pb-20 sm:gap-5">
+    <form onSubmit={(e) => handleSave(false, e)} className="flex flex-col gap-4 pb-20 sm:gap-5">
       {/* ── ข้อมูลโครงการ ── */}
       <motion.div {...fadeUp(0.05)}>
         <Card>
@@ -311,15 +319,17 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
                 <Select value={requestToId} onValueChange={setRequestToId} disabled={selectDisabled}>
                   <SelectTrigger aria-invalid={!!errors.requestToId || undefined}>
                     {selectedRequestTo ? (
-                      <span className="flex items-center gap-2">
+                      // div (not span) — the trigger's [&>span]:line-clamp-1 would
+                      // override flex and stack the avatar over the name
+                      <div className="flex min-w-0 items-center gap-2">
                         <UserAvatar
                           avatarUrl={selectedRequestTo.avatarUrl}
                           initial={(selectedRequestTo.firstName?.[0] ?? '?').toUpperCase()}
                           color="bg-violet-500"
                           size="xs"
                         />
-                        {fullName(selectedRequestTo)}
-                      </span>
+                        <span className="truncate">{fullName(selectedRequestTo)}</span>
+                      </div>
                     ) : (
                       <SelectValue placeholder={loadingMaster ? 'กำลังโหลด…' : 'เลือกผู้รับคำร้อง'} />
                     )}
@@ -427,15 +437,30 @@ export function SurveyForm({ initial, onSubmit, submitting }: SurveyFormProps) {
       <div className="sticky bottom-3 z-10 flex items-center justify-between gap-2 rounded-xl border bg-card/80 p-3 shadow-lg backdrop-blur-sm">
         <p className="hidden text-xs text-muted-foreground sm:block">
           {isEdit
-            ? 'แก้ไขได้เฉพาะสถานะ "ส่งแล้ว" — เมื่อเริ่มตรวจสอบจะแก้ไขไม่ได้'
-            : 'ส่งแล้วระบบจะแจ้งเตือนผู้รับคำร้องทางอีเมลทันที'}
+            ? 'แก้ไขได้เฉพาะสถานะ "ร่าง" หรือ "ถูกปฏิเสธ" — เมื่อส่งแล้วจะแก้ไขไม่ได้'
+            : 'บันทึกร่างไว้แก้ทีหลังได้ หรือส่งเลยให้ระบบแจ้งผู้รับคำร้องทันที'}
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <Button type="button" variant="cancel" disabled={submitting} onClick={() => router.back()}>
             ยกเลิก
           </Button>
+          {!isEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={submitting}
+              onClick={() => handleSave(true)}
+            >
+              {pendingMode === 'draft' ? <Loader2 className="animate-spin" /> : <FileEdit />}
+              บันทึกร่าง
+            </Button>
+          )}
           <Button type="submit" variant={isEdit ? 'save' : 'create'} disabled={submitting}>
-            {submitting ? <Loader2 className="animate-spin" /> : isEdit ? null : <Send />}
+            {pendingMode === 'send' || (isEdit && submitting) ? (
+              <Loader2 className="animate-spin" />
+            ) : isEdit ? null : (
+              <Send />
+            )}
             {isEdit ? 'บันทึกการแก้ไข' : 'ส่งคำร้อง'}
           </Button>
         </div>

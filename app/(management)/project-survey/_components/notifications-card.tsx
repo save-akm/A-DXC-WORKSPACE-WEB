@@ -10,24 +10,38 @@ import { fetchSurveyNotifications, markNotificationRead } from '@/lib/api/projec
 import type { SurveyNotification } from '@/lib/project-survey/types';
 import { formatDateTime } from '@/lib/project-survey/labels';
 
-/** In-app notifications for this survey. USER sees own; reviewer/admin see all. */
-export function NotificationsCard({ surveyId }: { surveyId: string }) {
-  const [items, setItems] = useState<SurveyNotification[] | null>(null);
+interface NotificationsCardProps {
+  surveyId: string;
+  meId: string;
+  /** Reviewer/admin (project_survey:UPDATE) sees every recipient's notifications for this survey. */
+  canViewAll: boolean;
+}
+
+/**
+ * In-app notifications for this survey. The requester only ever sees
+ * notifications addressed to them — requestTo's copies (e.g. the "start
+ * review" confirmation) stay out of their view, even if the backend response
+ * includes them.
+ */
+export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsCardProps) {
+  const [all, setAll] = useState<SurveyNotification[] | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetchSurveyNotifications(surveyId)
-      .then((n) => { if (!cancelled) setItems(n); })
-      .catch(() => { if (!cancelled) setItems([]); });
+      .then((n) => { if (!cancelled) setAll(n); })
+      .catch(() => { if (!cancelled) setAll([]); });
     return () => { cancelled = true; };
   }, [surveyId]);
+
+  const items = canViewAll ? all : all?.filter((n) => n.receiverId === meId) ?? null;
 
   async function handleMarkRead(n: SurveyNotification) {
     setMarkingId(n.id);
     try {
       const updated = await markNotificationRead(n.id);
-      setItems((prev) => prev?.map((x) => (x.id === updated.id ? { ...x, isRead: true } : x)) ?? null);
+      setAll((prev) => prev?.map((x) => (x.id === updated.id ? { ...x, isRead: true } : x)) ?? null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'อัปเดตการแจ้งเตือนไม่สำเร็จ');
     } finally {
@@ -83,7 +97,10 @@ export function NotificationsCard({ surveyId }: { surveyId: string }) {
                   <p className={cn('text-xs leading-snug', !n.isRead && 'font-medium')} title={n.subject}>
                     {n.subject}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{formatDateTime(n.sentAt)}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {formatDateTime(n.sentAt)}
+                    {canViewAll && n.receiverEmail && <> · ถึง {n.receiverEmail}</>}
+                  </p>
                 </div>
                 {!n.isRead && (
                   <Button

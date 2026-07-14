@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ClipboardList, Eye, Inbox, Pencil, Plus, Search, Trash2,
 } from 'lucide-react';
@@ -21,11 +21,13 @@ import { Pagination } from '@/components/management/pagination';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
 import { useMenuPermission } from '@/lib/hooks/use-menu-permission';
-import { deleteSurvey, fetchReviewInbox, fetchSurveys } from '@/lib/api/project-surveys';
-import type { SurveyListItem, SurveyStatus } from '@/lib/project-survey/types';
 import {
-  STATUS_LABELS, TYPE_SYSTEM_LABELS, formatDateTime, fullName,
-} from '@/lib/project-survey/labels';
+  deleteSurvey, fetchReviewInbox, fetchSurveyStats, fetchSurveys,
+  type SurveyStatusCounts,
+} from '@/lib/api/project-surveys';
+import type { SurveyListItem, SurveyStatus } from '@/lib/project-survey/types';
+import { TYPE_SYSTEM_LABELS, formatDateTime, fullName } from '@/lib/project-survey/labels';
+import { StatusStats } from './_components/status-stats';
 import { SurveyStatusBadge } from './_components/survey-status';
 
 const PAGE_SIZE = 20;
@@ -37,14 +39,14 @@ const fadeUp = (delay = 0) => ({
 });
 
 type Scope = 'all' | 'mine' | 'inbox';
-const STATUS_FILTERS: (SurveyStatus | 'ALL')[] = ['ALL', 'SEND', 'REVIEW', 'APPROVE'];
+const STATUS_FILTERS: (SurveyStatus | 'ALL')[] = ['ALL', 'DRAFT', 'SEND', 'REVIEW', 'APPROVE', 'REJECT'];
 
 const MotionTableRow = motion.create(TableRow);
 
 export default function ProjectSurveyListPage() {
   const router = useRouter();
   const meId = useAuthStore((s) => s.user?.id ?? '');
-  const { canCreate, canUpdate, canDelete } = useMenuPermission('project_survey');
+  const { canCreate, canUpdate } = useMenuPermission('project_survey');
 
   const [scope, setScope] = useState<Scope>('all');
   const [status, setStatus] = useState<SurveyStatus | 'ALL'>('ALL');
@@ -56,6 +58,10 @@ export default function ProjectSurveyListPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  /** Skeleton rows are for the cold start only — refetches keep the rows on screen. */
+  const [firstLoad, setFirstLoad] = useState(true);
+
+  const [stats, setStats] = useState<{ key: string; counts: SurveyStatusCounts } | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<SurveyListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -92,11 +98,35 @@ export default function ProjectSurveyListPage() {
       setTotal(0);
       setTotalPages(1);
     } finally {
-      if (seq === requestSeq.current) setLoading(false);
+      if (seq === requestSeq.current) {
+        setLoading(false);
+        setFirstLoad(false);
+      }
     }
   }, [page, debounced, status, scope]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // Counts depend on scope + keyword but not on the selected status (they *are*
+  // the status picker), so they reload on their own schedule — plus whenever a
+  // delete lands, via the bumped nonce. The result is stored with the key it was
+  // fetched for, so a stale set reads as "still loading" rather than needing an
+  // extra setState to clear it.
+  const [statsNonce, setStatsNonce] = useState(0);
+  const statsKey = `${scope}|${debounced}|${statsNonce}`;
+
+  useEffect(() => {
+    let stale = false;
+    fetchSurveyStats(
+      { keyword: debounced || undefined, mine: scope === 'mine' || undefined },
+      scope === 'inbox' ? 'inbox' : 'list',
+    )
+      .then((c) => { if (!stale) setStats({ key: statsKey, counts: c }); })
+      .catch(() => { /* keep the last good counts rather than blanking the cards */ });
+    return () => { stale = true; };
+  }, [scope, debounced, statsKey]);
+
+  const counts = stats?.key === statsKey ? stats.counts : null;
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -106,6 +136,7 @@ export default function ProjectSurveyListPage() {
       toast.success(`ลบคำร้อง ${deleteTarget.docNo} สำเร็จ`);
       setDeleteTarget(null);
       void load();
+      setStatsNonce((n) => n + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'ลบคำร้องไม่สำเร็จ');
     } finally {
@@ -127,18 +158,18 @@ export default function ProjectSurveyListPage() {
       { label: 'ดูรายละเอียด', icon: Eye, onClick: () => router.push(`/project-survey/${item.id}`) },
     ];
     const isOwner = item.requesterId === meId || item.createdById === meId;
-    if (item.status === 'SEND' && isOwner) {
+    // Owner may edit + delete only while DRAFT (not yet sent) or REJECT (bounced
+    // back) — SEND/REVIEW/APPROVE are locked once the request is in the pipeline.
+    if (isOwner && (item.status === 'DRAFT' || item.status === 'REJECT')) {
       actions.push({ label: 'แก้ไข', icon: Pencil, onClick: () => router.push(`/project-survey/${item.id}/edit`) });
-      if (canUpdate || canDelete) {
-        actions.push({ label: 'ลบ', icon: Trash2, destructive: true, onClick: () => setDeleteTarget(item) });
-      }
+      actions.push({ label: 'ลบ', icon: Trash2, destructive: true, onClick: () => setDeleteTarget(item) });
     }
     return actions;
-  }, [router, meId, canUpdate, canDelete]);
+  }, [router, meId]);
 
-  // Inbox only ever holds SEND / REVIEW — hide the APPROVE filter there.
+  // Inbox only ever holds SEND / REVIEW — hide the other status filters there.
   const statusFilters = scope === 'inbox'
-    ? STATUS_FILTERS.filter((s) => s !== 'APPROVE')
+    ? STATUS_FILTERS.filter((s) => s === 'ALL' || s === 'SEND' || s === 'REVIEW')
     : STATUS_FILTERS;
 
   return (
@@ -158,8 +189,11 @@ export default function ProjectSurveyListPage() {
         }
       />
 
+      {/* Per-status counts — also the status filter */}
+      <StatusStats counts={counts} keys={statusFilters} selected={status} onSelect={setStatus} />
+
       {/* Toolbar */}
-      <motion.div {...fadeUp(0.08)} className="flex flex-wrap items-center gap-2">
+      <motion.div {...fadeUp(0.36)} className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:max-w-72">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -194,31 +228,10 @@ export default function ProjectSurveyListPage() {
           ))}
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-border/60 bg-card/40 p-0.5">
-          {statusFilters.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatus(s)}
-              className={cn(
-                'relative z-10 cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                status === s ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {status === s && (
-                <motion.span
-                  layoutId="ps-status-bg"
-                  className="absolute inset-0 -z-10 rounded-md bg-accent/70"
-                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                />
-              )}
-              {s === 'ALL' ? 'ทุกสถานะ' : STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
       </motion.div>
 
       {/* Table */}
-      <motion.div {...fadeUp(0.16)}>
+      <motion.div {...fadeUp(0.42)}>
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <Table>
@@ -234,109 +247,122 @@ export default function ProjectSurveyListPage() {
                   <TableHead className="w-10 pr-3 sm:w-12 sm:pr-4" />
                 </TableRow>
               </TableHeader>
-              <AnimatePresence mode="wait" initial={false}>
-                <TableBody key={`${scope}-${status}-${page}-${debounced}`}>
-                  {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <TableRow key={`skeleton-${i}`}>
-                        <TableCell className="pl-4"><div className="h-3 w-4 animate-pulse rounded bg-muted" /></TableCell>
-                        <TableCell>
-                          <div className="space-y-1.5">
-                            <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-                            <div className="h-3.5 w-48 animate-pulse rounded bg-muted" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-2">
-                            <div className="size-8 animate-pulse rounded-full bg-muted" />
-                            <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell"><div className="h-3 w-24 animate-pulse rounded bg-muted" /></TableCell>
-                        <TableCell className="hidden lg:table-cell"><div className="h-3 w-20 animate-pulse rounded bg-muted" /></TableCell>
-                        <TableCell><div className="h-5 w-20 animate-pulse rounded-full bg-muted" /></TableCell>
-                        <TableCell className="hidden md:table-cell"><div className="h-3 w-24 animate-pulse rounded bg-muted" /></TableCell>
-                        <TableCell className="pr-4" />
-                      </TableRow>
-                    ))
-                  ) : items.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="py-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-                            <ClipboardList size={20} className="text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {scope === 'inbox' ? 'ไม่มีคำร้องรอตรวจสอบ' : 'ไม่พบคำร้อง'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {debounced || status !== 'ALL'
-                                ? 'ลองปรับคำค้นหาหรือตัวกรองสถานะ'
-                                : scope === 'inbox'
-                                  ? 'คำร้องที่ส่งเข้ามาใหม่จะปรากฏที่นี่'
-                                  : 'เริ่มต้นด้วยการสร้างคำร้องแรกของคุณ'}
-                            </p>
-                          </div>
-                          {canCreate && !debounced && status === 'ALL' && scope !== 'inbox' && (
-                            <Button variant="create" size="sm" onClick={() => router.push('/project-survey/new')}>
-                              <Plus />
-                              สร้างคำร้อง
-                            </Button>
-                          )}
+              {/* No key / AnimatePresence here on purpose: remounting the tbody on
+                  every filter change blanked the table for a frame, and swapping
+                  6 skeleton rows in for a py-20 empty state made the height jump
+                  twice. Refetches keep the current rows, just dimmed. */}
+              <TableBody
+                aria-busy={loading}
+                className={cn(
+                  'transition-opacity duration-200',
+                  loading && !firstLoad && 'opacity-45',
+                )}
+              >
+                {loading && firstLoad ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      <TableCell className="pl-4"><div className="h-3 w-4 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1.5">
+                          <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                          <div className="h-3.5 w-48 animate-pulse rounded bg-muted" />
                         </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    items.map((item, i) => (
-                      <MotionTableRow
-                        key={item.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, delay: i * 0.03, ease: EASE }}
-                        onClick={() => router.push(`/project-survey/${item.id}`)}
-                        className="cursor-pointer"
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className="size-8 animate-pulse rounded-full bg-muted" />
+                          <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell"><div className="h-3 w-24 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell className="hidden lg:table-cell"><div className="h-3 w-20 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell><div className="h-5 w-20 animate-pulse rounded-full bg-muted" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><div className="h-3 w-24 animate-pulse rounded bg-muted" /></TableCell>
+                      <TableCell className="pr-4" />
+                    </TableRow>
+                  ))
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-20 text-center">
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2, ease: EASE }}
+                        className="flex flex-col items-center gap-3"
                       >
-                        <TableCell className="pl-4 text-xs text-muted-foreground">
-                          {(page - 1) * PAGE_SIZE + i + 1}
-                        </TableCell>
-                        <TableCell>
-                          <p className="font-mono text-[11px] text-muted-foreground">{item.docNo}</p>
-                          <p className="max-w-64 truncate text-sm font-medium leading-tight">{item.projectName}</p>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-2">
-                            <UserAvatar
-                              avatarUrl={item.requester?.avatarUrl}
-                              initial={(item.requester?.firstName?.[0] ?? item.requesterName?.[0] ?? '?').toUpperCase()}
-                              color="bg-violet-500"
-                              size="sm"
-                            />
-                            <p className="max-w-32 truncate text-xs">{fullName(item.requester) === '—' ? item.requesterName : fullName(item.requester)}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <p className="text-xs">{item.department?.name ?? '—'}</p>
-                          <p className="text-[11px] text-muted-foreground">{item.branch?.name ?? '—'}</p>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <p className="text-xs">{TYPE_SYSTEM_LABELS[item.typeSystem]}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {item.kiYear?.name ?? '—'} · {item.budgetType?.name ?? '—'}
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+                          <ClipboardList size={20} className="text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {scope === 'inbox' ? 'ไม่มีคำร้องรอตรวจสอบ' : 'ไม่พบคำร้อง'}
                           </p>
-                        </TableCell>
-                        <TableCell><SurveyStatusBadge status={item.status} /></TableCell>
-                        <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                          {formatDateTime(item.updatedAt)}
-                        </TableCell>
-                        <TableCell className="pr-3 sm:pr-4" onClick={(e) => e.stopPropagation()}>
-                          <ActionMenu actions={rowActions(item)} />
-                        </TableCell>
-                      </MotionTableRow>
-                    ))
-                  )}
-                </TableBody>
-              </AnimatePresence>
+                          <p className="text-xs text-muted-foreground">
+                            {debounced || status !== 'ALL'
+                              ? 'ลองปรับคำค้นหาหรือตัวกรองสถานะ'
+                              : scope === 'inbox'
+                                ? 'คำร้องที่ส่งเข้ามาใหม่จะปรากฏที่นี่'
+                                : 'เริ่มต้นด้วยการสร้างคำร้องแรกของคุณ'}
+                          </p>
+                        </div>
+                        {canCreate && !debounced && status === 'ALL' && scope !== 'inbox' && (
+                          <Button variant="create" size="sm" onClick={() => router.push('/project-survey/new')}>
+                            <Plus />
+                            สร้างคำร้อง
+                          </Button>
+                        )}
+                      </motion.div>
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item, i) => (
+                    <MotionTableRow
+                      key={item.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: i * 0.03, ease: EASE }}
+                      onClick={() => router.push(`/project-survey/${item.id}`)}
+                      className="cursor-pointer"
+                    >
+                      <TableCell className="pl-4 text-xs text-muted-foreground">
+                        {(page - 1) * PAGE_SIZE + i + 1}
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-mono text-[11px] text-muted-foreground">{item.docNo}</p>
+                        <p className="max-w-64 truncate text-sm font-medium leading-tight">{item.projectName}</p>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar
+                            avatarUrl={item.requester?.avatarUrl}
+                            initial={(item.requester?.firstName?.[0] ?? item.requesterName?.[0] ?? '?').toUpperCase()}
+                            color="bg-violet-500"
+                            size="sm"
+                          />
+                          <p className="max-w-32 truncate text-xs">{fullName(item.requester) === '—' ? item.requesterName : fullName(item.requester)}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <p className="text-xs">{item.department?.name ?? '—'}</p>
+                        <p className="text-[11px] text-muted-foreground">{item.branch?.name ?? '—'}</p>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <p className="text-xs">{TYPE_SYSTEM_LABELS[item.typeSystem]}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {item.kiYear?.name ?? '—'} · {item.budgetType?.name ?? '—'}
+                        </p>
+                      </TableCell>
+                      <TableCell><SurveyStatusBadge status={item.status} /></TableCell>
+                      <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
+                        {formatDateTime(item.updatedAt)}
+                      </TableCell>
+                      <TableCell className="pr-3 sm:pr-4" onClick={(e) => e.stopPropagation()}>
+                        <ActionMenu actions={rowActions(item)} />
+                      </TableCell>
+                    </MotionTableRow>
+                  ))
+                )}
+              </TableBody>
             </Table>
             <Pagination
               page={page}

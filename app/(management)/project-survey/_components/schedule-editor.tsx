@@ -38,16 +38,18 @@ export function emptyScheduleDraft(process: string): ScheduleDraft {
 }
 
 export function draftsToSchedules(drafts: ScheduleDraft[]): ScheduleInput[] {
+  // Coerce to string first — a draft seeded from an API row may hold numeric
+  // estimateCost (backend returns Decimal as a number).
   return drafts.map((d) => ({
     job: d.job,
     process: d.process,
     planType: d.planType,
     planStart: d.planStart || null,
     planEnd: d.planEnd || null,
-    estimateCost: d.estimateCost.trim() !== '' && Number.isFinite(Number(d.estimateCost))
+    estimateCost: String(d.estimateCost).trim() !== '' && Number.isFinite(Number(d.estimateCost))
       ? Number(d.estimateCost)
       : null,
-    remark: d.remark.trim() || null,
+    remark: String(d.remark).trim() || null,
   }));
 }
 

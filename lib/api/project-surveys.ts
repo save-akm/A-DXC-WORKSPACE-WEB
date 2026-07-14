@@ -9,9 +9,11 @@ import type {
   KiYearRef,
   PaginatedSurveys,
   RefItem,
+  RejectSurveyInput,
   ReviewSurveyInput,
   ScheduleInput,
   ScheduleRow,
+  SubmitSurveyInput,
   SurveyActionEntry,
   SurveyAttachment,
   SurveyAuditLog,
@@ -20,6 +22,7 @@ import type {
   SurveyHistoryEntry,
   SurveyListParams,
   SurveyNotification,
+  SurveyStatus,
   UpdateSurveyInput,
   UserMini,
 } from '@/lib/project-survey/types';
@@ -101,6 +104,51 @@ export async function fetchReviewInbox(params?: SurveyListParams): Promise<Pagin
   return res.data;
 }
 
+/** Document count per status, plus their sum. */
+export type SurveyStatusCounts = Record<SurveyStatus, number> & { ALL: number };
+
+const INBOX_STATUSES: SurveyStatus[] = ['SEND', 'REVIEW'];
+const ZERO_COUNTS: Record<SurveyStatus, number> = {
+  DRAFT: 0, SEND: 0, REVIEW: 0, APPROVE: 0, REJECT: 0,
+};
+
+const withTotal = (counts: Record<SurveyStatus, number>): SurveyStatusCounts => ({
+  ...counts,
+  ALL: Object.values(counts).reduce((sum, n) => sum + n, 0),
+});
+
+/**
+ * GET /stats — per-status document counts. project_survey:VIEW
+ *
+ * Same scope rules as `GET /` (a USER without UPDATE only counts their own).
+ * The inbox has no stats route of its own, so its two statuses are counted by
+ * asking the inbox list for `limit=1` and reading `total` off each envelope.
+ * `ALL` is always the sum — there is no separate unfiltered count.
+ */
+export async function fetchSurveyStats(
+  params: Omit<SurveyListParams, 'page' | 'limit' | 'status'> = {},
+  scope: 'list' | 'inbox' = 'list',
+): Promise<SurveyStatusCounts> {
+  if (scope === 'inbox') {
+    const totals = await Promise.all(
+      INBOX_STATUSES.map((status) =>
+        fetchReviewInbox({ ...params, status, page: 1, limit: 1 })
+          .then((r) => r.total)
+          .catch(() => 0),
+      ),
+    );
+    return withTotal({
+      ...ZERO_COUNTS,
+      ...Object.fromEntries(INBOX_STATUSES.map((s, i) => [s, totals[i]])),
+    });
+  }
+
+  const res = await apiFetch<ApiEnvelope<Record<SurveyStatus, number>>>(
+    `${BASE}/stats${buildQuery(params)}`,
+  );
+  return withTotal({ ...ZERO_COUNTS, ...res.data });
+}
+
 // ── CRUD + workflow ───────────────────────────────────────────────────────────
 
 /** POST / — create + send immediately (status SEND). project_survey:CREATE */
@@ -124,6 +172,24 @@ export async function updateSurvey(id: string, input: UpdateSurveyInput): Promis
 /** DELETE /:id — owner delete while SEND. */
 export async function deleteSurvey(id: string): Promise<void> {
   await apiFetch<ApiEnvelope<{ ok: true }>>(`${BASE}/${id}`, { method: 'DELETE' });
+}
+
+/** POST /:id/submit — owner sends a DRAFT (DRAFT → SEND) + notifies requestTo. */
+export async function submitSurvey(id: string, input: SubmitSurveyInput = {}): Promise<SurveyDetail> {
+  const res = await apiFetch<ApiEnvelope<SurveyDetail>>(`${BASE}/${id}/submit`, {
+    method: 'POST',
+    body: input,
+  });
+  return res.data;
+}
+
+/** POST /:id/reject — A-DXC rejects while SEND or REVIEW; locks the document. */
+export async function rejectSurvey(id: string, input: RejectSurveyInput): Promise<SurveyDetail> {
+  const res = await apiFetch<ApiEnvelope<SurveyDetail>>(`${BASE}/${id}/reject`, {
+    method: 'POST',
+    body: input,
+  });
+  return res.data;
 }
 
 /** POST /:id/start-review — requestTo only, while SEND. (GET /:id already auto-starts.) */

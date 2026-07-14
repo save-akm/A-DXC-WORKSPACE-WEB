@@ -9,7 +9,7 @@ export interface ApiEnvelope<T> {
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type SurveyStatus = 'SEND' | 'REVIEW' | 'APPROVE';
+export type SurveyStatus = 'DRAFT' | 'SEND' | 'REVIEW' | 'APPROVE' | 'REJECT';
 export type TypeSystem = 'AS400' | 'NON_AS400';
 export type CostCategory = 'HARDWARE' | 'SOFTWARE' | 'OUTSOURCE' | 'IN_HOUSE';
 export type ScheduleJob = 'REQUIREMENT' | 'DEVELOP' | 'START_USE';
@@ -209,12 +209,14 @@ export interface SurveyListItem {
 }
 
 export interface SurveyDetail extends SurveyListItem {
-  requestToId: string;
+  /** Optional while DRAFT — a draft may not have picked a requestTo yet. */
+  requestToId: string | null;
   request: string | null;
   changePoint: string | null;
   detail: string | null;
+  /** Reason A-DXC gave when REJECT — null otherwise. */
   reason: string | null;
-  requestTo: UserMini;
+  requestTo: UserMini | null;
   updatedBy: UserMini;
   collection: { id: string } | null;
   costs: CostRow[];
@@ -251,7 +253,10 @@ export interface CreateSurveyInput {
   kiId: string;
   typeSystem: TypeSystem;
   budgetTypeId: string;
-  requestToId: string;
+  /** Required unless `asDraft` is true. */
+  requestToId?: string;
+  /** true → status DRAFT, no notification. Omit/false → sent immediately (requestToId required). */
+  asDraft?: boolean;
   request?: string;
   changePoint?: string;
   detail?: string;
@@ -259,7 +264,16 @@ export interface CreateSurveyInput {
   schedules?: ScheduleInput[];
 }
 
-export type UpdateSurveyInput = Partial<CreateSurveyInput>;
+export type UpdateSurveyInput = Partial<Omit<CreateSurveyInput, 'asDraft'>>;
+
+export interface SubmitSurveyInput {
+  /** Required unless requestToId was already set on the survey. */
+  requestToId?: string;
+}
+
+export interface RejectSurveyInput {
+  reason: string;
+}
 
 export interface ReviewSurveyInput {
   estimateCost?: number;

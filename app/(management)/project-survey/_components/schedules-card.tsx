@@ -88,7 +88,7 @@ export function SchedulesCard({ surveyId, schedules, onChange, canEdit }: Schedu
       planType: s.planType,
       planStart: toDateInputValue(s.planStart),
       planEnd: toDateInputValue(s.planEnd),
-      estimateCost: s.estimateCost ?? '',
+      estimateCost: s.estimateCost == null ? '' : String(s.estimateCost),
       remark: s.remark ?? '',
     })));
     setEditing(true);

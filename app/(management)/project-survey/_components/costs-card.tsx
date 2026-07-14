@@ -7,7 +7,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/componen
 import { toast } from '@/components/ui/toast';
 import { replaceCosts } from '@/lib/api/project-surveys';
 import type { CostRow } from '@/lib/project-survey/types';
-import { COST_CATEGORY_LABELS, formatAmount } from '@/lib/project-survey/labels';
+import { formatAmount } from '@/lib/project-survey/labels';
 import { CostEditor, draftsToCosts, type CostDraft } from './cost-editor';
 
 interface CostsCardProps {
@@ -27,7 +27,7 @@ export function CostsCard({ surveyId, costs, onChange, canEdit }: CostsCardProps
   const total = costs.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
   function startEdit() {
-    setDrafts(costs.map((c) => ({ category: c.category, amount: c.amount })));
+    setDrafts(costs.map((c) => ({ category: c.category, amount: String(c.amount ?? '') })));
     setEditing(true);
   }
 
@@ -83,7 +83,7 @@ export function CostsCard({ surveyId, costs, onChange, canEdit }: CostsCardProps
             <ul className="divide-y divide-border/60">
               {costs.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-3 py-2 first:pt-0">
-                  <span className="text-[13px]">{COST_CATEGORY_LABELS[c.category]}</span>
+                  <span className="text-[13px]">{c.category}</span>
                   <span className="font-mono text-[13px] tabular-nums">{formatAmount(c.amount)}</span>
                 </li>
               ))}

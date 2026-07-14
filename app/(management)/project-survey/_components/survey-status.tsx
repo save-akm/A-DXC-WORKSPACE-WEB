@@ -1,14 +1,16 @@
 'use client';
 
-import { Check, FileSearch, Send, type LucideIcon } from 'lucide-react';
+import { Check, FileEdit, FileSearch, Send, XCircle, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SurveyStatus } from '@/lib/project-survey/types';
 import { STATUS_LABELS } from '@/lib/project-survey/labels';
 
-const STATUS_STYLES: Record<SurveyStatus, { badge: string; dot: string; icon: LucideIcon }> = {
+export const STATUS_STYLES: Record<SurveyStatus, { badge: string; dot: string; icon: LucideIcon }> = {
+  DRAFT:   { badge: 'bg-muted text-muted-foreground',                       dot: 'bg-muted-foreground/50', icon: FileEdit },
   SEND:    { badge: 'bg-sky-500/10 text-sky-700 dark:text-sky-400',         dot: 'bg-sky-500',     icon: Send },
   REVIEW:  { badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',   dot: 'bg-amber-500',   icon: FileSearch },
   APPROVE: { badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500', icon: Check },
+  REJECT:  { badge: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',      dot: 'bg-rose-500',    icon: XCircle },
 };
 
 export function SurveyStatusBadge({ status, className }: { status: SurveyStatus; className?: string }) {
@@ -36,8 +38,12 @@ const STEPS: { key: SurveyStatus; icon: LucideIcon }[] = [
 /**
  * Horizontal SEND → REVIEW → APPROVE stepper for the detail header.
  * Completed + current steps are tinted; upcoming steps stay muted.
+ * DRAFT hasn't entered this flow yet and REJECT is a side-branch out of it —
+ * both render nothing here; the caller shows a status-specific banner instead.
  */
 export function SurveyStepper({ status, className }: { status: SurveyStatus; className?: string }) {
+  if (status === 'DRAFT' || status === 'REJECT') return null;
+
   const currentIdx = STEPS.findIndex((s) => s.key === status);
 
   return (

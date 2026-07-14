@@ -1,33 +1,26 @@
 // Thai labels + display helpers for the Project Survey module.
 
-import type {
-  CostCategory,
-  SurveyStatus,
-  TypeSystem,
-} from './types';
+import type { SurveyStatus, TypeSystem } from './types';
 
 export const STATUS_LABELS: Record<SurveyStatus, string> = {
+  DRAFT: 'ร่าง',
   SEND: 'ส่งแล้ว',
   REVIEW: 'กำลังตรวจสอบ',
   APPROVE: 'อนุมัติแล้ว',
+  REJECT: 'ถูกปฏิเสธ',
 };
 
 export const STATUS_DESCRIPTIONS: Record<SurveyStatus, string> = {
+  DRAFT: 'ยังไม่ส่ง — แก้ไข/ลบได้อิสระ',
   SEND: 'รอผู้รับคำร้องเปิดดู',
   REVIEW: 'A-DXC กำลังประเมิน',
   APPROVE: 'อนุมัติแล้ว — เอกสารถูกล็อก',
+  REJECT: 'ถูกปฏิเสธแล้ว — เอกสารถูกล็อก',
 };
 
 export const TYPE_SYSTEM_LABELS: Record<TypeSystem, string> = {
   AS400: 'AS/400',
   NON_AS400: 'Non-AS/400',
-};
-
-export const COST_CATEGORY_LABELS: Record<CostCategory, string> = {
-  HARDWARE: 'ฮาร์ดแวร์',
-  SOFTWARE: 'ซอฟต์แวร์',
-  OUTSOURCE: 'จ้างภายนอก',
-  IN_HOUSE: 'พัฒนาภายใน',
 };
 
 export const PROCESS_LABELS: Record<string, string> = {

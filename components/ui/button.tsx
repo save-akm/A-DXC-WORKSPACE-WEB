@@ -21,7 +21,7 @@ const buttonVariants = cva(
         cancel:
           "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         save:
-          "bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20 hover:from-emerald-600 hover:to-teal-600 focus-visible:border-emerald-400 focus-visible:ring-emerald-500/30",
+          "bg-clip-border bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20 hover:from-emerald-600 hover:to-teal-600 focus-visible:border-emerald-400 focus-visible:ring-emerald-500/30",
         create:
           "rounded-xl bg-clip-border bg-linear-to-r from-indigo-500 to-violet-600 px-4 py-2 h-auto text-xs font-semibold text-white shadow-md shadow-indigo-500/30 transition-shadow hover:shadow-lg hover:shadow-indigo-500/50 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/30",
       },
