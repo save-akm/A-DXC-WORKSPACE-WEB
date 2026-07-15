@@ -15,6 +15,8 @@ interface NotificationsCardProps {
   meId: string;
   /** Reviewer/admin (project_survey:UPDATE) sees every recipient's notifications for this survey. */
   canViewAll: boolean;
+  /** Bump to refetch — the detail page increments this on survey:statusChanged. */
+  refreshKey?: number;
 }
 
 /**
@@ -23,7 +25,7 @@ interface NotificationsCardProps {
  * review" confirmation) stay out of their view, even if the backend response
  * includes them.
  */
-export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsCardProps) {
+export function NotificationsCard({ surveyId, meId, canViewAll, refreshKey = 0 }: NotificationsCardProps) {
   const [all, setAll] = useState<SurveyNotification[] | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsC
       .then((n) => { if (!cancelled) setAll(n); })
       .catch(() => { if (!cancelled) setAll([]); });
     return () => { cancelled = true; };
-  }, [surveyId]);
+  }, [surveyId, refreshKey]);
 
   const items = canViewAll ? all : all?.filter((n) => n.receiverId === meId) ?? null;
 
@@ -41,7 +43,8 @@ export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsC
     setMarkingId(n.id);
     try {
       const updated = await markNotificationRead(n.id);
-      setAll((prev) => prev?.map((x) => (x.id === updated.id ? { ...x, isRead: true } : x)) ?? null);
+      // Use the server row verbatim — it carries the authoritative readAt.
+      setAll((prev) => prev?.map((x) => (x.id === updated.id ? updated : x)) ?? null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'อัปเดตการแจ้งเตือนไม่สำเร็จ');
     } finally {
@@ -49,7 +52,10 @@ export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsC
     }
   }
 
-  const unread = items?.filter((n) => !n.isRead).length ?? 0;
+  // "Unread" is personal: a reviewer can view everyone's notifications but the
+  // backend only lets you mark your OWN read, so counting others' would strand
+  // the badge. Scope both the badge and the read button to receiverId === meId.
+  const unread = items?.filter((n) => !n.isRead && n.receiverId === meId).length ?? 0;
 
   return (
     <Card>
@@ -100,9 +106,10 @@ export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsC
                   <p className="truncate text-[11px] text-muted-foreground">
                     {formatDateTime(n.sentAt)}
                     {canViewAll && n.receiverEmail && <> · ถึง {n.receiverEmail}</>}
+                    {n.isRead && n.readAt && <> · อ่านเมื่อ {formatDateTime(n.readAt)}</>}
                   </p>
                 </div>
-                {!n.isRead && (
+                {n.receiverId === meId && !n.isRead ? (
                   <Button
                     variant="ghost"
                     size="icon-xs"
@@ -114,7 +121,20 @@ export function NotificationsCard({ surveyId, meId, canViewAll }: NotificationsC
                   >
                     <Check size={13} />
                   </Button>
-                )}
+                ) : canViewAll ? (
+                  // Reviewer/admin: show each recipient's read status explicitly,
+                  // since they can see everyone's copies but can't act on them.
+                  <span
+                    className={cn(
+                      'mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                      n.isRead
+                        ? 'bg-muted text-muted-foreground'
+                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                    )}
+                  >
+                    {n.isRead ? 'อ่านแล้ว' : 'ยังไม่อ่าน'}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>

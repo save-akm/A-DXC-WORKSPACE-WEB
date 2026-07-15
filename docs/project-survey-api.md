@@ -1095,6 +1095,7 @@ Replace เฉพาะแถว `source = A_DXC`
     "subject": "[Project Survey] PS-2026-00001 — คำร้องใหม่รอ Review",
     "message": "...",
     "isRead": false,
+    "readAt": null,
     "sentAt": "2026-07-13T08:00:00.000Z"
   }
 ]
@@ -1108,7 +1109,7 @@ USER เห็นเฉพาะ notification ของตัวเอง — re
 
 **Perm:** `VIEW` → `200`
 
-**Response `data`:** notification row ที่ `isRead: true`
+**Response `data`:** notification row ที่ `isRead: true` + `readAt` เป็นเวลาที่กดอ่านครั้งแรก (เรียกซ้ำไม่ทับค่าเดิม)
 
 ---
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/management/page-header';
 import { Markdown } from '@/app/(management)/blog/_components/markdown';
 import { useAuthStore } from '@/lib/store';
 import { useMenuPermission } from '@/lib/hooks/use-menu-permission';
+import { useSocketEvents } from '@/lib/hooks/use-socket-events';
 import {
   approveSurvey, deleteSurvey, fetchSurvey, rejectSurvey, submitSurvey,
 } from '@/lib/api/project-surveys';
@@ -104,15 +105,38 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Bumped on socket events so NotificationsCard refetches its list.
+  const [notifRefresh, setNotifRefresh] = useState(0);
+
   // GET /:id auto-starts REVIEW when the viewer is requestTo and status is SEND.
-  useEffect(() => {
-    let cancelled = false;
-    fetchSurvey(id)
-      .then((s) => { if (!cancelled) setSurvey(s); })
-      .catch(() => { if (!cancelled) setNotFound(true); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const s = await fetchSurvey(id);
+      setSurvey(s);
+      setNotFound(false);
+    } catch {
+      if (!silent) setNotFound(true);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  // Live refresh: every status transition (SEND/REVIEW/APPROVE/REJECT) also
+  // generates notifications server-side, so one broadcast re-pulls both the
+  // document (stepper, buttons, review) and the notifications card — no
+  // dedicated notification channel needed.
+  const socketEvents = useMemo(() => ({
+    'survey:statusChanged': (...args: unknown[]) => {
+      const payload = args[0] as { surveyId?: string } | undefined;
+      if (payload?.surveyId !== id) return;
+      void load(true);
+      setNotifRefresh((k) => k + 1);
+    },
+  }), [id, load]);
+  useSocketEvents(socketEvents);
 
   const handleAttachments = useCallback((next: SurveyAttachment[]) => {
     setSurvey((prev) => (prev ? { ...prev, attachments: next } : prev));
@@ -406,7 +430,12 @@ export default function ProjectSurveyDetailPage({ params }: { params: Promise<{ 
           </motion.div>
 
           <motion.div {...fadeUp(0.18)}>
-            <NotificationsCard surveyId={survey.id} meId={meId} canViewAll={isReviewer} />
+            <NotificationsCard
+              surveyId={survey.id}
+              meId={meId}
+              canViewAll={isReviewer}
+              refreshKey={notifRefresh}
+            />
           </motion.div>
 
           <motion.div {...fadeUp(0.22)}>

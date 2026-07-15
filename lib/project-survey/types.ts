@@ -177,6 +177,7 @@ export interface SurveyNotification {
   subject: string;
   message: string;
   isRead: boolean;
+  readAt: string | null;
   sentAt: string;
 }
 
